@@ -1,0 +1,334 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/build/${presetName}/install",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_COLOR_DIAGNOSTICS": "ON"
+            }
+        },
+        {
+            "name": "config-debug",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_FLAGS": "-g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wnull-dereference -Woverloaded-virtual -Werror -fsanitize=address"
+            }
+        },
+        {
+            "name": "config-release",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_CXX_FLAGS": "-O3 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wcast-align -Wcast-qual -Wnull-dereference -Woverloaded-virtual -Werror"
+            }
+        },
+        {
+            "name": "with-tests",
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_TESTING": "ON"
+            }
+        },
+        {
+            "name": "without-tests",
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_TESTING": "OFF"
+            }
+        },
+        {
+            "name": "with-benchmarks",
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_BENCHMARKS": "ON"
+            }
+        },
+        {
+            "name": "without-benchmarks",
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_BENCHMARKS": "OFF"
+            }
+        },
+        {
+            "name": "type-shared",
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_SHARED_LIBS": "ON"
+            }
+        },
+        {
+            "name": "type-static",
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_SHARED_LIBS": "OFF"
+            }
+        },
+        {
+            "name": "static-debug",
+            "displayName": "Configure static library (debug)",
+            "inherits": [
+                "base",
+                "config-debug",
+                "type-static",
+                "with-tests",
+                "with-benchmarks"
+            ]
+        },
+        {
+            "name": "static-release",
+            "displayName": "Configure static library (release)",
+            "inherits": [
+                "base",
+                "config-release",
+                "type-static",
+                "with-tests",
+                "with-benchmarks"
+            ]
+        },
+        {
+            "name": "shared-debug",
+            "displayName": "Configure shared library (debug)",
+            "inherits": [
+                "base",
+                "config-debug",
+                "type-shared",
+                "with-tests",
+                "with-benchmarks"
+            ]
+        },
+        {
+            "name": "shared-release",
+            "displayName": "Configure shared library (release)",
+            "inherits": [
+                "base",
+                "config-release",
+                "type-shared",
+                "with-tests",
+                "with-benchmarks"
+            ]
+        },
+        {
+            "name": "static-install",
+            "displayName": "Configure/Install static library (release)",
+            "inherits": [
+                "base",
+                "config-release",
+                "type-static",
+                "without-tests",
+                "without-benchmarks"
+            ]
+        },
+        {
+            "name": "shared-install",
+            "displayName": "Configure/Install shared library (release)",
+            "inherits": [
+                "base",
+                "config-release",
+                "type-shared",
+                "without-tests",
+                "without-benchmarks"
+            ]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "static-debug",
+            "configurePreset": "static-debug"
+        },
+        {
+            "name": "static-release",
+            "configurePreset": "static-release"
+        },
+        {
+            "name": "shared-debug",
+            "configurePreset": "shared-debug"
+        },
+        {
+            "name": "shared-release",
+            "configurePreset": "shared-release"
+        },
+        {
+            "name": "static-install",
+            "configurePreset": "static-install",
+            "targets": "install"
+        },
+        {
+            "name": "shared-install",
+            "configurePreset": "shared-install",
+            "targets": "install"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "base-test",
+            "hidden": true,
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": false
+            },
+            "filter": {
+                "exclude": {
+                    "label": "benchmark"
+                }
+            }
+        },
+        {
+            "name": "base-benchmark",
+            "hidden": true,
+            "output": {
+                "outputOnFailure": true,
+                "verbosity": "verbose"
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": false
+            },
+            "filter": {
+                "include": {
+                    "label": "benchmark"
+                }
+            }
+        },
+        {
+            "name": "shared-debug",
+            "configurePreset": "shared-debug",
+            "inherits": "base-test"
+        },
+        {
+            "name": "shared-release",
+            "configurePreset": "shared-release",
+            "inherits": "base-test"
+        },
+        {
+            "name": "static-debug",
+            "configurePreset": "static-debug",
+            "inherits": "base-test"
+        },
+        {
+            "name": "static-release",
+            "configurePreset": "static-release",
+            "inherits": "base-test"
+        },
+        {
+            "name": "static-benchmark",
+            "configurePreset": "static-release",
+            "inherits": "base-benchmark"
+        },
+        {
+            "name": "shared-benchmark",
+            "configurePreset": "shared-release",
+            "inherits": "base-benchmark"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "static-test",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "static-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "static-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "static-debug"
+                }
+            ]
+        },
+        {
+            "name": "shared-test",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "shared-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "shared-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "shared-debug"
+                }
+            ]
+        },
+        {
+            "name": "static-benchmark",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "static-release"
+                },
+                {
+                    "type": "build",
+                    "name": "static-release"
+                },
+                {
+                    "type": "test",
+                    "name": "static-benchmark"
+                }
+            ]
+        },
+        {
+            "name": "shared-benchmark",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "shared-release"
+                },
+                {
+                    "type": "build",
+                    "name": "shared-release"
+                },
+                {
+                    "type": "test",
+                    "name": "shared-benchmark"
+                }
+            ]
+        },
+        {
+            "name": "static-install",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "static-install"
+                },
+                {
+                    "type": "build",
+                    "name": "static-install"
+                }
+            ]
+        },
+        {
+            "name": "shared-install",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "shared-install"
+                },
+                {
+                    "type": "build",
+                    "name": "shared-install"
+                }
+            ]
+        }
+    ]
+}
