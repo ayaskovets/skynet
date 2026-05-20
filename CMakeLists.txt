@@ -5,6 +5,12 @@ project(
   LANGUAGES CXX)
 
 # ------------------------------------------------------------------------------
+# dependencies
+# ------------------------------------------------------------------------------
+
+find_package(swiss REQUIRED)
+
+# ------------------------------------------------------------------------------
 # general settings and options
 # ------------------------------------------------------------------------------
 
@@ -22,10 +28,27 @@ include(GenerateExportHeader)
 generate_export_header(skynet EXPORT_FILE_NAME
                        "${CMAKE_CURRENT_BINARY_DIR}/include/skynet/export.hpp")
 
-set(SOURCES src/dns.cpp)
+set(SOURCES
+    src/base_sockaddr.cpp
+    src/dns.cpp
+    src/inet/ip.cpp
+    src/inet/port.cpp
+    src/inet/sockaddr.cpp
+    src/inet6/ip.cpp
+    src/inet6/sockaddr.cpp)
 set(HEADERS
     "${CMAKE_CURRENT_BINARY_DIR}/include/skynet/export.hpp"
-    include/skynet/dns.hpp)
+    include/skynet/base_sockaddr.hpp
+    include/skynet/dns.hpp
+    include/skynet/family.hpp
+    include/skynet/inet/ip.hpp
+    include/skynet/inet/port.hpp
+    include/skynet/inet/sockaddr.hpp
+    include/skynet/inet6/ip.hpp
+    include/skynet/inet6/port.hpp
+    include/skynet/inet6/sockaddr.hpp
+    include/skynet/protocol.hpp
+    include/skynet/socktype.hpp)
 
 # ------------------------------------------------------------------------------
 # target
@@ -53,6 +76,8 @@ set_target_properties(
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(skynet PUBLIC SKYNET_STATIC_DEFINE)
 endif()
+
+target_link_libraries(skynet PUBLIC swiss::swiss)
 
 # ------------------------------------------------------------------------------
 # install

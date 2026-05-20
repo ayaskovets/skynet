@@ -10,6 +10,7 @@ Checks: "*,
         -cppcoreguidelines-non-private-member-variables-in-classes,
         -altera-unroll-loops,
         -hicpp-vararg,
-        -readability-magic-numbers"
+        -readability-magic-numbers,
+        -hicpp-member-init"
 FormatStyle: none
 WarningsAsErrors: "*"

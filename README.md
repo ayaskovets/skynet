@@ -8,6 +8,10 @@ This library requires C++23
 
 This library uses CMake workflows (CMake >= 3.25.0) for all its build scripts
 
+# dependencies
+
+- [swiss](https://github.com/ayaskovets/swiss)
+
 # install
 
 Install location is defined in **installDir** [CMakePresets.json](./CMakePresets.json)
