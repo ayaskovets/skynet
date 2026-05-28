@@ -11,6 +11,7 @@ Checks: "*,
         -altera-unroll-loops,
         -hicpp-vararg,
         -readability-magic-numbers,
-        -hicpp-member-init"
+        -hicpp-member-init,
+        -hicpp-no-array-decay"
 FormatStyle: none
 WarningsAsErrors: "*"

@@ -24,7 +24,7 @@ add_executable(skynet-unit-tests)
 # sources
 # ------------------------------------------------------------------------------
 
-set(SOURCES dns_test.cpp)
+set(SOURCES base_sockaddr_test.cpp dns_test.cpp)
 
 # ------------------------------------------------------------------------------
 # target
