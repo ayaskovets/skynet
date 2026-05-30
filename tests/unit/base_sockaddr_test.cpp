@@ -2,33 +2,31 @@
 
 #include <gtest/gtest.h>
 
-namespace tests::net {
-
-namespace net = skynet;
+namespace tests::unit {
 
 namespace {
 
-class impl_sockaddr final : public net::base_sockaddr {
+class sockaddr final : public skynet::base_sockaddr {
  public:
-  explicit impl_sockaddr(net::family family) : net::base_sockaddr(family) {}
+  explicit sockaddr(skynet::family family) : base_sockaddr(family) {}
 
  public:
-  using net::base_sockaddr::native_sockaddr;
+  using base_sockaddr::native_sockaddr;
 };
 
 }  // namespace
 
 TEST(net_sockets_base_sockaddr, size) {
-  static_assert(sizeof(net::base_sockaddr) == 24);
-  static_assert(alignof(net::base_sockaddr) == 8);
+  static_assert(sizeof(sockaddr) == 24);
+  static_assert(alignof(sockaddr) == 8);
 }
 
-class net_sockets_base_sockaddr : public ::testing::TestWithParam<net::family> {
-};
+class net_sockets_base_sockaddr
+    : public ::testing::TestWithParam<skynet::family> {};
 
 TEST_P(net_sockets_base_sockaddr, smoke) {
   auto const & family = GetParam();
-  impl_sockaddr const sockaddr(family);
+  sockaddr const sockaddr(family);
 
   EXPECT_GT(sockaddr.length(), 0);
   EXPECT_EQ(sockaddr.family(), family);
@@ -38,9 +36,9 @@ TEST_P(net_sockets_base_sockaddr, smoke) {
 
 TEST_P(net_sockets_base_sockaddr, copy) {
   auto const & family = GetParam();
-  impl_sockaddr const original(family);
+  sockaddr const original(family);
   // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
-  impl_sockaddr const copy(original);
+  sockaddr const copy(original);
 
   EXPECT_EQ(original.family(), copy.family());
   EXPECT_EQ(original.length(), copy.length());
@@ -50,8 +48,8 @@ TEST_P(net_sockets_base_sockaddr, copy) {
 
 TEST_P(net_sockets_base_sockaddr, move) {
   auto const & family = GetParam();
-  impl_sockaddr original(family);
-  impl_sockaddr const move(std::move(original));
+  sockaddr original(family);
+  sockaddr const move(std::move(original));
 
   EXPECT_GT(move.length(), 0);
   EXPECT_EQ(move.family(), family);
@@ -60,8 +58,8 @@ TEST_P(net_sockets_base_sockaddr, move) {
 }
 
 INSTANTIATE_TEST_SUITE_P(net_sockets_base_sockaddr, net_sockets_base_sockaddr,
-                         ::testing::Values(net::family::kInet,
-                                           net::family::kInet6,
-                                           net::family::kUnix));
+                         ::testing::Values(skynet::family::kInet,
+                                           skynet::family::kInet6,
+                                           skynet::family::kUnix));
 
-}  // namespace tests::net
+}  // namespace tests::unit
