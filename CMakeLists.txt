@@ -51,6 +51,8 @@ set(HEADERS
     include/skynet/inet6/ip.hpp
     include/skynet/inet6/port.hpp
     include/skynet/inet6/sockaddr.hpp
+    include/skynet/platform/platform.hpp
+    include/skynet/platform/unix.hpp
     include/skynet/unix/sockaddr.hpp
     include/skynet/base_sockaddr.hpp
     include/skynet/base_socket.hpp
