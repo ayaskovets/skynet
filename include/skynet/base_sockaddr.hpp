@@ -16,6 +16,11 @@ namespace skynet {
  * native_sockaddr() method
  */
 class base_sockaddr {
+  /**
+   * @note Required for base_socket to call bind, connect, etc.
+   */
+  friend class base_socket;
+
  protected:
   explicit base_sockaddr(family family);
 

@@ -40,7 +40,7 @@ class base_socket {
    * @brief Manually close a socket
    *
    * This method explicitly throws an exception in case of any failure. This is
-   * done to keep RAII semantics for the type but to allow user code to receive
+   * done to keep RAII semantics for the type but to allow user code to recv
    * the error if needed
    *
    * Any subsequent calls will result in an exception
@@ -69,34 +69,34 @@ class base_socket {
   void set_option(broadcast option);
   void set_option(keepalive option);
   void set_option(linger option);
+  void set_option(nodelay option);
   void set_option(nonblock option);
   void set_option(oobinline option);
   void set_option(rcvbuf option);
   void set_option(reuseaddr option);
   void set_option(reuseport option);
   void set_option(sndbuf option);
-  void set_option(nodelay option);
 
  public:
-  [[nodiscard]] auto get_option(acceptconn_t) const -> acceptconn;
-  [[nodiscard]] auto get_option(broadcast_t) const -> broadcast;
-  [[nodiscard]] auto get_option(keepalive_t) const -> keepalive;
-  [[nodiscard]] auto get_option(linger_t) const -> linger;
-  [[nodiscard]] auto get_option(nonblock_t) const -> nonblock;
-  [[nodiscard]] auto get_option(oobinline_t) const -> oobinline;
-  [[nodiscard]] auto get_option(rcvbuf_t) const -> rcvbuf;
-  [[nodiscard]] auto get_option(reuseaddr_t) const -> reuseaddr;
-  [[nodiscard]] auto get_option(reuseport_t) const -> reuseport;
-  [[nodiscard]] auto get_option(sndbuf_t) const -> sndbuf;
-  [[nodiscard]] auto get_option(nodelay_t) const -> nodelay;
+  void get_option(acceptconn &) const;
+  void get_option(broadcast &) const;
+  void get_option(keepalive &) const;
+  void get_option(linger &) const;
+  void get_option(nodelay &) const;
+  void get_option(nonblock &) const;
+  void get_option(oobinline &) const;
+  void get_option(rcvbuf &) const;
+  void get_option(reuseaddr &) const;
+  void get_option(reuseport &) const;
+  void get_option(sndbuf &) const;
 
  public:
   auto bind(base_sockaddr const & sockaddr) -> bind_status;
   auto connect(base_sockaddr const & sockaddr) -> connect_status;
 
  public:
-  void bind_sockaddr(base_sockaddr & sockaddr) const;
-  void connect_sockaddr(base_sockaddr & sockaddr) const;
+  void getsockname(base_sockaddr & sockaddr) const;
+  void getpeername(base_sockaddr & sockaddr) const;
 
  public:
   void listen(std::size_t backlog);
@@ -104,12 +104,12 @@ class base_socket {
 
  public:
   auto send(std::span<std::byte const> bytes) -> std::size_t;
-  auto receive(std::span<std::byte> bytes) -> std::size_t;
+  auto recv(std::span<std::byte> bytes) -> std::size_t;
 
  public:
-  auto send_to(std::span<std::byte const> bytes, base_sockaddr const & sockaddr)
+  auto sendto(std::span<std::byte const> bytes, base_sockaddr const & sockaddr)
       -> std::size_t;
-  auto receive_from(std::span<std::byte> bytes, base_sockaddr & sockaddr)
+  auto recvfrom(std::span<std::byte> bytes, base_sockaddr & sockaddr)
       -> std::size_t;
 
  private:

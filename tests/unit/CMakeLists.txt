@@ -34,8 +34,9 @@ set(SOURCES
     unix/sockaddr_test.cpp
     base_sockaddr_test.cpp
     base_socket_test.cpp
+    dns_test.cpp
     sockaddr_test.cpp
-    dns_test.cpp)
+    socket_test.cpp)
 
 # ------------------------------------------------------------------------------
 # target

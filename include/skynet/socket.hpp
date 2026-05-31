@@ -21,8 +21,8 @@ concept socket = requires(T socket, Sockaddr sockaddr) {
   { socket.bind(sockaddr) } -> std::same_as<bind_status>;
   { socket.connect(sockaddr) } -> std::same_as<connect_status>;
 
-  { socket.bind_sockaddr(sockaddr) };
-  { socket.connect_sockaddr(sockaddr) };
+  { socket.getsockname(sockaddr) };
+  { socket.getpeername(sockaddr) };
 
   { socket.close() };
 
@@ -44,15 +44,15 @@ concept stream_socket =
       { socket.accept(socket) } -> std::same_as<accept_status>;
 
       { socket.send(bytes) } -> std::same_as<size_t>;
-      { socket.receive(bytes) } -> std::same_as<size_t>;
+      { socket.recv(bytes) } -> std::same_as<size_t>;
     };
 
 template <typename T, typename Sockaddr>
 concept dgram_socket =
     socket<T, Sockaddr> &&
     requires(T socket, Sockaddr sockaddr, std::span<std::byte> bytes) {
-      { socket.send_to(bytes, sockaddr) } -> std::same_as<size_t>;
-      { socket.receive_from(bytes, sockaddr) } -> std::same_as<size_t>;
+      { socket.sendto(bytes, sockaddr) } -> std::same_as<size_t>;
+      { socket.recvfrom(bytes, sockaddr) } -> std::same_as<size_t>;
     };
 
 }  // namespace skynet::concepts
