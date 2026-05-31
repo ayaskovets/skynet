@@ -58,7 +58,7 @@ auto resolve(std::string_view hostname, family family, socktype socktype)
 
   addrinfo * results = nullptr;
 
-  auto const retval =
+  int const retval =
       // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
       getaddrinfo(hostname.data(), nullptr, &hints, &results);
   switch (retval) {

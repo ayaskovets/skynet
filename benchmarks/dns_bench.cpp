@@ -9,15 +9,15 @@ constexpr void BM_dns_resolve_localhost(benchmark::State & state) noexcept {
   // NOLINTNEXTLINE(readability-identifier-length)
   for (auto const _ : state) {
     benchmark::DoNotOptimize(skynet::resolve(
-        "localhost", skynet::family::kUnspecified, skynet::protocol::kTcp));
+        "localhost", skynet::family::kUnspec, skynet::socktype::kStream));
   }
 }
 BENCHMARK(BM_dns_resolve_localhost)->Unit(benchmark::kMicrosecond);
 
 constexpr void BM_dns_resolve_google(benchmark::State & state) noexcept {
   try {
-    skynet::resolve("google.com", skynet::family::kUnspecified,
-                    skynet::protocol::kTcp);
+    skynet::resolve("google.com", skynet::family::kUnspec,
+                    skynet::socktype::kStream);
   } catch (std::exception const & e) {
     state.SkipWithMessage(e.what());
   }
@@ -25,7 +25,7 @@ constexpr void BM_dns_resolve_google(benchmark::State & state) noexcept {
   // NOLINTNEXTLINE(readability-identifier-length)
   for (auto const _ : state) {
     benchmark::DoNotOptimize(skynet::resolve(
-        "google.com", skynet::family::kUnspecified, skynet::protocol::kTcp));
+        "google.com", skynet::family::kUnspec, skynet::socktype::kStream));
   }
 }
 BENCHMARK(BM_dns_resolve_google)->Unit(benchmark::kMicrosecond);

@@ -29,8 +29,6 @@ generate_export_header(skynet EXPORT_FILE_NAME
                        "${CMAKE_CURRENT_BINARY_DIR}/include/skynet/export.hpp")
 
 set(SOURCES
-    src/base_sockaddr.cpp
-    src/dns.cpp
     src/inet/ip.cpp
     src/inet/port.cpp
     src/inet/sockaddr.cpp
@@ -38,12 +36,15 @@ set(SOURCES
     src/inet6/sockaddr.cpp
     src/platform/platform.hpp
     src/platform/unix.hpp
-    src/unix/sockaddr.cpp)
+    src/unix/sockaddr.cpp
+    src/base_sockaddr.cpp
+    src/base_socket.cpp
+    src/dns.cpp
+    src/family.cpp
+    src/protocol.cpp
+    src/socktype.cpp)
 set(HEADERS
     "${CMAKE_CURRENT_BINARY_DIR}/include/skynet/export.hpp"
-    include/skynet/base_sockaddr.hpp
-    include/skynet/dns.hpp
-    include/skynet/family.hpp
     include/skynet/inet/ip.hpp
     include/skynet/inet/port.hpp
     include/skynet/inet/sockaddr.hpp
@@ -51,6 +52,10 @@ set(HEADERS
     include/skynet/inet6/port.hpp
     include/skynet/inet6/sockaddr.hpp
     include/skynet/unix/sockaddr.hpp
+    include/skynet/base_sockaddr.hpp
+    include/skynet/base_socket.hpp
+    include/skynet/dns.hpp
+    include/skynet/family.hpp
     include/skynet/protocol.hpp
     include/skynet/socktype.hpp)
 
