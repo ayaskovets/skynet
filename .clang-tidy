@@ -12,6 +12,8 @@ Checks: "*,
         -hicpp-vararg,
         -readability-magic-numbers,
         -hicpp-member-init,
-        -hicpp-no-array-decay"
+        -hicpp-no-array-decay,
+        -hicpp-noexcept-move,
+        -performance-noexcept-move-constructor"
 FormatStyle: none
 WarningsAsErrors: "*"

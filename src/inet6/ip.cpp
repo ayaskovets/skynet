@@ -1,10 +1,6 @@
 #include <skynet/inet6/ip.hpp>
 
-#include <cerrno>
-#include <format>
-#include <system_error>
-
-#include <arpa/inet.h>
+#include "platform/platform.hpp"  // IWYU pragma: keep
 
 namespace skynet::inet6 {
 // NOLINTBEGIN(readability-identifier-length,bugprone-exception-escape)
@@ -34,17 +30,14 @@ ip::ip(network_byte_order_t, std::span<std::byte const, 16> bytes) noexcept {
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 ip::ip(std::string_view string) {
-  constexpr int kInetPtonSuccess = 1;
-
   if (string.size() > INET6_ADDRSTRLEN) {
     throw std::invalid_argument(std::format("invalid ip: {}", string));
   }
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  if (::inet_pton(AF_INET6, string.data(), &data_) != kInetPtonSuccess) {
+  if (inet_pton(AF_INET6, string.data(), &data_) != 1) {
     throw std::invalid_argument(
-        std::format("invalid ip {}: {}", string,
-                    std::error_code(errno, std::generic_category()).message()));
+        std::format("invalid ip {}: {}", string, platform::errno_strerror()));
   }
 }
 
@@ -54,22 +47,18 @@ auto ip::to_bytes(network_byte_order_t) const noexcept
 }
 
 auto ip::to_string() const -> std::string {
-  constexpr auto kInetNtopError = nullptr;
-
   std::string string;
   string.resize(INET6_ADDRSTRLEN);
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  if (::inet_ntop(AF_INET6, &data_, string.data(),
-                  static_cast<::socklen_t>(string.size())) != kInetNtopError)
-      [[likely]] {
-    string.resize(string.find('\0'));
-    return string;
+  if (inet_ntop(AF_INET6, &data_, string.data(),
+                static_cast<socklen_t>(string.size())) == nullptr) {
+    throw std::runtime_error(
+        std::format("could not serialize ip: {}", platform::errno_strerror()));
   }
 
-  throw std::runtime_error(
-      std::format("could not serialize ip: {}",
-                  std::error_code(errno, std::generic_category()).message()));
+  string.resize(std::min(string.capacity(), string.find('\0')));
+  return string;
 }
 
 // NOLINTEND(readability-identifier-length,bugprone-exception-escape)

@@ -35,7 +35,10 @@ set(SOURCES
     src/inet/port.cpp
     src/inet/sockaddr.cpp
     src/inet6/ip.cpp
-    src/inet6/sockaddr.cpp)
+    src/inet6/sockaddr.cpp
+    src/platform/platform.hpp
+    src/platform/unix.hpp
+    src/unix/sockaddr.cpp)
 set(HEADERS
     "${CMAKE_CURRENT_BINARY_DIR}/include/skynet/export.hpp"
     include/skynet/base_sockaddr.hpp
@@ -47,6 +50,7 @@ set(HEADERS
     include/skynet/inet6/ip.hpp
     include/skynet/inet6/port.hpp
     include/skynet/inet6/sockaddr.hpp
+    include/skynet/unix/sockaddr.hpp
     include/skynet/protocol.hpp
     include/skynet/socktype.hpp)
 
@@ -76,6 +80,8 @@ set_target_properties(
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(skynet PUBLIC SKYNET_STATIC_DEFINE)
 endif()
+
+target_include_directories(skynet PRIVATE src)
 
 target_link_libraries(skynet PUBLIC swiss::swiss)
 

@@ -6,16 +6,16 @@
 
 #include "inet/sockaddr.hpp"
 #include "inet6/sockaddr.hpp"
-#include "protocol.hpp"
+#include "socktype.hpp"
 
 namespace skynet {
 
 /**
  * @brief Resolve IPv4 or IPv6 address from a hostname
- * @note Use family::kUnspecified to resolve all available addresses
- * @note Use protocol::kUnspecified to resolve all available protocols
+ * @note Use family::kUnspec to resolve all available addresses
+ * @note Use socktype::kUnspec to resolve all available socket types
  */
-auto resolve(std::string_view hostname, family family, protocol protocol)
+auto resolve(std::string_view hostname, family family, socktype socktype)
     -> std::vector<std::variant<inet::sockaddr, inet6::sockaddr>>;
 
 }  // namespace skynet

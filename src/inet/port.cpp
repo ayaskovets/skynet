@@ -1,6 +1,6 @@
 #include <skynet/inet/port.hpp>
 
-#include <arpa/inet.h>
+#include "platform/platform.hpp"  // IWYU pragma: keep
 
 namespace skynet::inet {
 

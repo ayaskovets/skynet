@@ -9,11 +9,14 @@ namespace skynet {
  * @brief Address family
  */
 enum class family : std::uint8_t {
-  kUnspecified,
+  kUnspec,
   kInet,
   kInet6,
   kUnix,
 };
+
+auto to_native_family(family family) noexcept -> int;
+auto from_native_family(int native_family) -> family;
 
 }  // namespace skynet
 
@@ -29,7 +32,7 @@ class std::formatter<skynet::family> {
   constexpr auto format(skynet::family const & family,
                         FormatContext & ctx) const noexcept {
     switch (family) {
-      case skynet::family::kUnspecified:
+      case skynet::family::kUnspec:
         return std::format_to(ctx.out(), "AF_UNSPEC");
       case skynet::family::kInet:
         return std::format_to(ctx.out(), "AF_INET");

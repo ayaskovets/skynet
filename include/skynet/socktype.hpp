@@ -9,12 +9,16 @@ namespace skynet {
  * @brief Protocol type
  */
 enum class socktype : std::uint8_t {
+  kUnspec,
   kStream,
   kDgram,
   kRaw,
   kRdm,
   kSeqpacket,
 };
+
+auto to_native_socktype(socktype socktype) noexcept -> int;
+auto from_native_socktype(int native_socktype) -> socktype;
 
 }  // namespace skynet
 
@@ -30,6 +34,8 @@ class std::formatter<skynet::socktype> {
   constexpr auto format(skynet::socktype const & type,
                         FormatContext & ctx) const noexcept {
     switch (type) {
+      case skynet::socktype::kUnspec:
+        return std::format_to(ctx.out(), "SOCK_UNSPEC");
       case skynet::socktype::kStream:
         return std::format_to(ctx.out(), "SOCK_STREAM");
       case skynet::socktype::kDgram:

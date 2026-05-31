@@ -1,10 +1,6 @@
 #include <skynet/inet/ip.hpp>
 
-#include <cerrno>
-#include <format>
-#include <system_error>
-
-#include <arpa/inet.h>
+#include "platform/platform.hpp"  // IWYU pragma: keep
 
 namespace skynet::inet {
 // NOLINTBEGIN(readability-identifier-length)
@@ -39,18 +35,19 @@ ip::ip(network_byte_order_t, std::uint32_t bytes) noexcept : data_(bytes) {}
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 ip::ip(std::string_view string) {
-  constexpr int kInetPtonSuccess = 1;
-
-  if (string.size() > INET_ADDRSTRLEN) {
+  if (string.size() > INET_ADDRSTRLEN) [[unlikely]] {
     throw std::invalid_argument(std::format("invalid ip: {}", string));
   }
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  if (::inet_pton(AF_INET, string.data(), &data_) != kInetPtonSuccess)
-      [[unlikely]] {
-    throw std::invalid_argument(
-        std::format("invalid ip {}: {}", string,
-                    std::error_code(errno, std::generic_category()).message()));
+  switch (inet_pton(AF_INET, string.data(), &data_)) {
+    case 1:
+      break;
+    case 0:
+      throw std::invalid_argument(std::format("invalid ip: {}", string));
+    default:
+      throw std::invalid_argument(
+          std::format("invalid ip {}: {}", string, platform::errno_strerror()));
   }
 }
 
@@ -61,21 +58,18 @@ auto ip::to_bytes(network_byte_order_t) const noexcept -> std::uint32_t {
 }
 
 auto ip::to_string() const -> std::string {
-  constexpr auto kInetNtopError = nullptr;
-
   std::string string;
   string.resize(INET_ADDRSTRLEN);
 
-  if (::inet_ntop(AF_INET, &data_, string.data(),
-                  static_cast<::socklen_t>(string.size())) != kInetNtopError)
-      [[likely]] {
-    string.resize(string.find('\0'));
-    return string;
+  if (inet_ntop(AF_INET, &data_, string.data(),
+                static_cast<socklen_t>(string.size())) == nullptr)
+      [[unlikely]] {
+    throw std::runtime_error(
+        std::format("could not serialize ip: {}", platform::errno_strerror()));
   }
 
-  throw std::runtime_error(
-      std::format("could not serialize ip: {}",
-                  std::error_code(errno, std::generic_category()).message()));
+  string.resize(std::min(string.capacity(), string.find('\0')));
+  return string;
 }
 
 // NOLINTEND(readability-identifier-length)

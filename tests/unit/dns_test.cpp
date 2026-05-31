@@ -6,7 +6,7 @@ namespace tests::unit {
 
 TEST(dns, resolve_localhost_udp_ip4) {
   auto const results = skynet::resolve("localhost", skynet::family::kInet,
-                                       skynet::protocol::kUdp);
+                                       skynet::socktype::kDgram);
   EXPECT_EQ(results.size(), 1);
 
   auto const & sockaddr = results.at(0);
@@ -16,7 +16,7 @@ TEST(dns, resolve_localhost_udp_ip4) {
 
 TEST(dns, resolve_localhost_tcp_ip6) {
   auto const results = skynet::resolve("localhost", skynet::family::kInet6,
-                                       skynet::protocol::kTcp);
+                                       skynet::socktype::kStream);
   EXPECT_EQ(results.size(), 1);
 
   auto const & sockaddr = results.at(0);
@@ -25,9 +25,8 @@ TEST(dns, resolve_localhost_tcp_ip6) {
 }
 
 TEST(dns, resolve_localhost_unspec) {
-  auto const results =
-      skynet::resolve("localhost", skynet::family::kUnspecified,
-                      skynet::protocol::kUnspecified);
+  auto const results = skynet::resolve("localhost", skynet::family::kUnspec,
+                                       skynet::socktype::kUnspec);
   EXPECT_EQ(results.size(), 4);
 }
 

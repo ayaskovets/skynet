@@ -25,15 +25,17 @@ add_executable(skynet-unit-tests)
 # ------------------------------------------------------------------------------
 
 set(SOURCES
+    base_sockaddr_test.cpp
+    base_socket_test.cpp
+    dns_test.cpp
     inet/ip_test.cpp
     inet/port_test.cpp
     inet/sockaddr_test.cpp
     inet6/ip_test.cpp
     inet6/port_test.cpp
     inet6/sockaddr_test.cpp
-    base_sockaddr_test.cpp
-    dns_test.cpp
-    sockaddr_test.cpp)
+    sockaddr_test.cpp
+    unix/sockaddr_test.cpp)
 
 # ------------------------------------------------------------------------------
 # target

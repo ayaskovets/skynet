@@ -9,10 +9,13 @@ namespace skynet {
  * @brief Specific protocol
  */
 enum class protocol : std::uint8_t {
-  kUnspecified,
+  kIp,
   kTcp,
   kUdp,
 };
+
+auto to_native_protocol(protocol protocol) noexcept -> int;
+auto from_native_protocol(int native_protocol) -> protocol;
 
 }  // namespace skynet
 
@@ -28,8 +31,8 @@ class std::formatter<skynet::protocol> {
   constexpr auto format(skynet::protocol const & protocol,
                         FormatContext & ctx) const noexcept {
     switch (protocol) {
-      case skynet::protocol::kUnspecified:
-        return std::format_to(ctx.out(), "UNSPECIFIED");
+      case skynet::protocol::kIp:
+        return std::format_to(ctx.out(), "IPPROTO_IP");
       case skynet::protocol::kTcp:
         return std::format_to(ctx.out(), "IPPROTO_TCP");
       case skynet::protocol::kUdp:
