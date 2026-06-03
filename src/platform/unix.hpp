@@ -4,6 +4,7 @@
 #include <system_error>
 
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -24,8 +25,8 @@ using native_handle = int;
  */
 namespace skynet::platform {
 
-constexpr int kInvalidSocket = -1;
-constexpr int kErrorRetval   = -1;
+constexpr native_handle kInvalidNativeHandle = -1;
+constexpr int kErrorRetval                   = -1;
 
 }  // namespace skynet::platform
 
@@ -34,7 +35,8 @@ constexpr int kErrorRetval   = -1;
  */
 namespace skynet::platform {
 
-constexpr auto close_native_handle(int native_handle) noexcept -> int {
+constexpr auto close_native_handle(native_handle native_handle) noexcept
+    -> int {
   return ::close(native_handle);
 }
 

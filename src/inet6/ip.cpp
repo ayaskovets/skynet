@@ -35,7 +35,7 @@ ip::ip(std::string_view string) {
   }
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  if (inet_pton(AF_INET6, string.data(), &data_) != 1) {
+  if (::inet_pton(AF_INET6, string.data(), &data_) != 1) {
     throw std::invalid_argument(
         std::format("invalid ip {}: {}", string, platform::errno_strerror()));
   }
@@ -51,8 +51,8 @@ auto ip::to_string() const -> std::string {
   string.resize(INET6_ADDRSTRLEN);
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  if (inet_ntop(AF_INET6, &data_, string.data(),
-                static_cast<socklen_t>(string.size())) == nullptr) {
+  if (::inet_ntop(AF_INET6, &data_, string.data(),
+                  static_cast<::socklen_t>(string.size())) == nullptr) {
     throw std::runtime_error(
         std::format("could not serialize ip: {}", platform::errno_strerror()));
   }

@@ -26,7 +26,7 @@ concept _private_platform = requires(native_handle handle) {
   /**
    * @section Constants
    */
-  { kInvalidSocket } -> swiss::decay_same_as<native_handle>;
+  { kInvalidNativeHandle } -> swiss::decay_same_as<native_handle>;
   { kErrorRetval } -> swiss::decay_same_as<int>;
 
   /**

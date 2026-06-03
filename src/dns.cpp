@@ -9,11 +9,11 @@ namespace skynet {
 
 namespace {
 
-constexpr auto to_sockaddr(addrinfo const & addrinfo)
+constexpr auto to_sockaddr(::addrinfo const & addrinfo)
     -> std::variant<inet::sockaddr, inet6::sockaddr> {
   switch (addrinfo.ai_family) {
     case AF_INET: {
-      auto const * sockaddr = static_cast<sockaddr_in const *>(
+      auto const * sockaddr = static_cast<::sockaddr_in const *>(
           // NOLINTNEXTLINE(bugprone-casting-through-void)
           static_cast<void const *>(addrinfo.ai_addr));
 
@@ -22,7 +22,7 @@ constexpr auto to_sockaddr(addrinfo const & addrinfo)
           inet::port(network_byte_order_t{}, sockaddr->sin_port));
     }
     case AF_INET6: {
-      auto const * sockaddr = static_cast<sockaddr_in6 const *>(
+      auto const * sockaddr = static_cast<::sockaddr_in6 const *>(
           // NOLINTNEXTLINE(bugprone-casting-through-void)
           static_cast<void const *>(addrinfo.ai_addr));
 
@@ -48,19 +48,19 @@ auto resolve(std::string_view hostname, family family, socktype socktype)
     throw std::invalid_argument(std::format("unsupported family: {}", family));
   }
 
-  std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> results_raii(nullptr,
-                                                                  freeaddrinfo);
+  std::unique_ptr<::addrinfo, decltype(&::freeaddrinfo)> results_raii(
+      nullptr, ::freeaddrinfo);
 
-  addrinfo const hints{
+  ::addrinfo const hints{
       .ai_family   = to_native_family(family),
       .ai_socktype = to_native_socktype(socktype),
   };
 
-  addrinfo * results = nullptr;
+  ::addrinfo * results = nullptr;
 
   int const retval =
       // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-      getaddrinfo(hostname.data(), nullptr, &hints, &results);
+      ::getaddrinfo(hostname.data(), nullptr, &hints, &results);
   switch (retval) {
     case 0:
       results_raii.reset(results);
@@ -72,11 +72,11 @@ auto resolve(std::string_view hostname, family family, socktype socktype)
     default:
       throw std::runtime_error(
           std::format("failed to resolve any address at {}: {}", hostname,
-                      gai_strerror(retval)));
+                      ::gai_strerror(retval)));
   }
 
   std::vector<std::variant<inet::sockaddr, inet6::sockaddr>> sockaddrs;
-  for (addrinfo const * ptr = results; ptr != nullptr; ptr = ptr->ai_next) {
+  for (::addrinfo const * ptr = results; ptr != nullptr; ptr = ptr->ai_next) {
     sockaddrs.emplace_back(to_sockaddr(*ptr));
   }
   return sockaddrs;

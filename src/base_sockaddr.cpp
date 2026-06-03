@@ -11,11 +11,12 @@ base_sockaddr::base_sockaddr(enum family family)
             throw std::invalid_argument(
                 std::format("invalid sockaddr family: {}", family));
           case family::kInet:
-            return swiss::unchecked_any(sockaddr_in{.sin_family = AF_INET});
+            return swiss::unchecked_any(::sockaddr_in{.sin_family = AF_INET});
           case family::kInet6:
-            return swiss::unchecked_any(sockaddr_in6{.sin6_family = AF_INET6});
+            return swiss::unchecked_any(
+                ::sockaddr_in6{.sin6_family = AF_INET6});
           case family::kUnix:
-            return swiss::unchecked_any(sockaddr_un{.sun_family = AF_UNIX});
+            return swiss::unchecked_any(::sockaddr_un{.sun_family = AF_UNIX});
         }
       }()) {}
 
@@ -30,28 +31,28 @@ auto base_sockaddr::native_sockaddr() const noexcept -> void const * {
 auto base_sockaddr::operator==(base_sockaddr const & that) const -> bool {
   switch (impl_.get<sockaddr>()->sa_family) {
     case AF_INET: {
-      auto const * this_sockaddr = impl_.get<sockaddr_in>();
-      auto const * that_sockaddr = that.impl_.get<sockaddr_in>();
+      auto const * this_sockaddr = impl_.get<::sockaddr_in>();
+      auto const * that_sockaddr = that.impl_.get<::sockaddr_in>();
 
       return std::memcmp(&this_sockaddr->sin_addr, &that_sockaddr->sin_addr,
-                         sizeof(sockaddr_in{}.sin_addr)) == 0 &&
+                         sizeof(::sockaddr_in{}.sin_addr)) == 0 &&
              this_sockaddr->sin_port == that_sockaddr->sin_port;
     }
     case AF_INET6: {
-      auto const * this_sockaddr = impl_.get<sockaddr_in6>();
-      auto const * that_sockaddr = that.impl_.get<sockaddr_in6>();
+      auto const * this_sockaddr = impl_.get<::sockaddr_in6>();
+      auto const * that_sockaddr = that.impl_.get<::sockaddr_in6>();
 
       return std::memcmp(&this_sockaddr->sin6_addr, &that_sockaddr->sin6_addr,
-                         sizeof(sockaddr_in6{}.sin6_addr)) == 0 &&
+                         sizeof(::sockaddr_in6{}.sin6_addr)) == 0 &&
              this_sockaddr->sin6_port == that_sockaddr->sin6_port;
     }
     case AF_UNIX: {
-      auto const * this_sockaddr = impl_.get<sockaddr_un>();
-      auto const * that_sockaddr = that.impl_.get<sockaddr_un>();
+      auto const * this_sockaddr = impl_.get<::sockaddr_un>();
+      auto const * that_sockaddr = that.impl_.get<::sockaddr_un>();
 
       // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
       return std::strncmp(this_sockaddr->sun_path, that_sockaddr->sun_path,
-                          sizeof(sockaddr_un{}.sun_path)) == 0;
+                          sizeof(::sockaddr_un{}.sun_path)) == 0;
     }
     [[unlikely]] default:
       throw std::runtime_error("unimplemented");
@@ -63,20 +64,20 @@ auto base_sockaddr::operator!=(base_sockaddr const & that) const -> bool {
 }
 
 auto base_sockaddr::length() const -> std::size_t {
-  switch (impl_.get<sockaddr>()->sa_family) {
+  switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET:
-      return sizeof(sockaddr_in);
+      return sizeof(::sockaddr_in);
     case AF_INET6:
-      return sizeof(sockaddr_in6);
+      return sizeof(::sockaddr_in6);
     case AF_UNIX:
-      return sizeof(sockaddr_un);
+      return sizeof(::sockaddr_un);
     [[unlikely]] default:
       throw std::runtime_error("unimplemented");
   }
 }
 
 auto base_sockaddr::family() const -> enum family {
-  switch (impl_.get<sockaddr>()->sa_family) {
+  switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET:
       return family::kInet;
     case AF_INET6:
@@ -94,14 +95,14 @@ auto base_sockaddr::to_string() const -> std::string {
   constexpr std::size_t kBracketStrlen = 1;
 
   std::string string;
-  switch (impl_.get<sockaddr>()->sa_family) {
+  switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET: {
-      auto const * sockaddr = impl_.get<sockaddr_in>();
+      auto const * sockaddr = impl_.get<::sockaddr_in>();
 
       string.resize(INET_ADDRSTRLEN + kColonStrlen + kPortStrlen);
 
       if (inet_ntop(AF_INET, &sockaddr->sin_addr, string.data(),
-                    static_cast<socklen_t>(string.size())) == nullptr)
+                    static_cast<::socklen_t>(string.size())) == nullptr)
           [[unlikely]] {
         throw std::runtime_error(
             std::format("inet_ntop failed: {}", platform::errno_strerror()));
@@ -113,7 +114,7 @@ auto base_sockaddr::to_string() const -> std::string {
       break;
     }
     case AF_INET6: {
-      auto const * sockaddr = impl_.get<sockaddr_in6>();
+      auto const * sockaddr = impl_.get<::sockaddr_in6>();
 
       string.resize(kBracketStrlen + INET6_ADDRSTRLEN + kBracketStrlen +
                     kColonStrlen + kPortStrlen);
@@ -123,7 +124,8 @@ auto base_sockaddr::to_string() const -> std::string {
               AF_INET6, &sockaddr->sin6_addr,
               // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
               string.data() + kBracketStrlen,
-              static_cast<socklen_t>(string.size())) == nullptr) [[unlikely]] {
+              static_cast<::socklen_t>(string.size())) == nullptr)
+          [[unlikely]] {
         throw std::runtime_error(
             std::format("inet_ntop failed: {}", platform::errno_strerror()));
       }
@@ -135,7 +137,7 @@ auto base_sockaddr::to_string() const -> std::string {
       break;
     }
     case AF_UNIX: {
-      auto const * sockaddr = impl_.get<sockaddr_un>();
+      auto const * sockaddr = impl_.get<::sockaddr_un>();
 
       string.resize(sizeof(sockaddr->sun_path));
       // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)

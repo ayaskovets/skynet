@@ -40,7 +40,7 @@ ip::ip(std::string_view string) {
   }
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  switch (inet_pton(AF_INET, string.data(), &data_)) {
+  switch (::inet_pton(AF_INET, string.data(), &data_)) {
     case 1:
       break;
     case 0:
@@ -61,8 +61,8 @@ auto ip::to_string() const -> std::string {
   std::string string;
   string.resize(INET_ADDRSTRLEN);
 
-  if (inet_ntop(AF_INET, &data_, string.data(),
-                static_cast<socklen_t>(string.size())) == nullptr)
+  if (::inet_ntop(AF_INET, &data_, string.data(),
+                  static_cast<::socklen_t>(string.size())) == nullptr)
       [[unlikely]] {
     throw std::runtime_error(
         std::format("could not serialize ip: {}", platform::errno_strerror()));
