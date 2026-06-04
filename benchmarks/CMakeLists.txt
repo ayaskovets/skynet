@@ -24,8 +24,16 @@ add_executable(skynet-benchmarks)
 # sources
 # ------------------------------------------------------------------------------
 
-set(SOURCES inet/sockaddr_bench.cpp inet6/sockaddr_bench.cpp
-            unix/sockaddr_bench.cpp dns_bench.cpp main.cpp)
+set(SOURCES
+    inet/tcp/socket_bench.cpp
+    inet/udp/socket_bench.cpp
+    inet/sockaddr_bench.cpp
+    inet6/tcp/socket_bench.cpp
+    inet6/udp/socket_bench.cpp
+    inet6/sockaddr_bench.cpp
+    unix/sockaddr_bench.cpp
+    dns_bench.cpp
+    main.cpp)
 
 # ------------------------------------------------------------------------------
 # target

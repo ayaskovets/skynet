@@ -87,7 +87,7 @@ class base_socket {
   void get_option(sndbuf & option) const;
   void get_option(nodelay & option) const;
 
- protected:
+ public:
   auto bind(base_sockaddr const & sockaddr) -> bind_status;
   auto connect(base_sockaddr const & sockaddr) -> connect_status;
 

@@ -237,21 +237,15 @@ TEST_P(base_socket, move) {
 
 INSTANTIATE_TEST_SUITE_P(
     base_socket, base_socket,
-    ::testing::Combine(
-        ::testing::Values<skynet::family>(skynet::family::kInet
-                                          //,  skynet::family::kInet6,
-                                          //  skynet::family::kUnix
-                                          ),
-        ::testing::Values<skynet::socktype>(
-            skynet::socktype::kStream
-            //,  skynet::socktype::kDgram,
-            //  skynet::socktype::kRaw, skynet::socktype::kRdm,
-            //  skynet::socktype::kSeqpacket
-            ),
-        ::testing::Values<skynet::protocol>(
-            //  skynet::protocol::kIp,
-            skynet::protocol::kTcp
-            //  ,skynet::protocol::kUdp
-            )));
+    ::testing::Combine(::testing::Values<skynet::family>(skynet::family::kInet,
+                                                         skynet::family::kInet6,
+                                                         skynet::family::kUnix),
+                       ::testing::Values<skynet::socktype>(
+                           skynet::socktype::kStream, skynet::socktype::kDgram,
+                           skynet::socktype::kRaw, skynet::socktype::kRdm,
+                           skynet::socktype::kSeqpacket),
+                       ::testing::Values<skynet::protocol>(
+                           skynet::protocol::kDefault, skynet::protocol::kTcp,
+                           skynet::protocol::kUdp)));
 
 }  // namespace tests::unit
