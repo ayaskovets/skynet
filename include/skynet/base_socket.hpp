@@ -16,7 +16,7 @@
 namespace skynet {
 
 /**
- * @brief Socket base class
+ * @brief Socket base class. Non-constructible by itself
  */
 class base_socket {
  protected:
@@ -30,9 +30,10 @@ class base_socket {
   auto operator=(base_socket && that) noexcept -> base_socket &;
   ~base_socket() noexcept;
 
- public:
+ protected:
   class impl;
   [[nodiscard]] auto native_handle() const noexcept -> impl const &;
+  [[nodiscard]] auto native_handle() noexcept -> impl &;
 
  public:
   /**
@@ -62,7 +63,7 @@ class base_socket {
   [[nodiscard]] auto family() const -> family;
   [[nodiscard]] auto socktype() const -> socktype;
 
- public:
+ protected:
   void set_option(broadcast option);
   void set_option(keepalive option);
   void set_option(linger option);
@@ -74,7 +75,7 @@ class base_socket {
   void set_option(sndbuf option);
   void set_option(nodelay option);
 
- public:
+ protected:
   void get_option(broadcast & option) const;
   void get_option(keepalive & option) const;
   void get_option(linger & option) const;
@@ -86,7 +87,7 @@ class base_socket {
   void get_option(sndbuf & option) const;
   void get_option(nodelay & option) const;
 
- public:
+ protected:
   auto bind(base_sockaddr const & sockaddr) -> bind_status;
   auto connect(base_sockaddr const & sockaddr) -> connect_status;
 
@@ -94,22 +95,19 @@ class base_socket {
   void getsockname(base_sockaddr & sockaddr) const;
   void getpeername(base_sockaddr & sockaddr) const;
 
- public:
+ protected:
   void listen(std::size_t backlog);
   auto accept(base_socket & socket) const -> accept_status;
 
- public:
+ protected:
   auto send(std::span<std::byte const> bytes) -> std::size_t;
   auto recv(std::span<std::byte> bytes) -> std::size_t;
 
- public:
+ protected:
   auto sendto(std::span<std::byte const> bytes, base_sockaddr const & sockaddr)
       -> std::size_t;
   auto recvfrom(std::span<std::byte> bytes, base_sockaddr & sockaddr)
       -> std::size_t;
-
- private:
-  [[nodiscard]] auto native_handle() noexcept -> impl &;
 
  private:
   swiss::static_pimpl<impl, platform::kNativeHandleSize,

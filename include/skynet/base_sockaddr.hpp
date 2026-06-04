@@ -10,14 +10,15 @@
 namespace skynet {
 
 /**
- * @brief Sockaddr storage of any family
+ * @brief Sockaddr storage of any family. Non-constructible by itself
  * @warning Storage for the appropriate sockaddr structure is managed by the
  * base_sockaddr. Derived classes are expected to access the storage through
  * native_sockaddr() method
  */
 class base_sockaddr {
   /**
-   * @note Required for base_socket to call bind, connect, etc.
+   * @note Required for base_socket to implement sockaddr methods that have to
+   * construct or mutate sockaddr storage in any way e.g. bind or connect
    */
   friend class base_socket;
 
