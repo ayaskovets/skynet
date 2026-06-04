@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace benchmarks::net::inet6 {
+namespace benchmarks::inet6 {
 // NOLINTBEGIN(misc-use-internal-linkage)
 
 constexpr void BM_net_inet6_from_bytes(benchmark::State & state) noexcept {
@@ -42,4 +42,4 @@ constexpr void BM_net_inet6_to_string(benchmark::State & state) noexcept {
 BENCHMARK(BM_net_inet6_to_string);
 
 // NOLINTEND(misc-use-internal-linkage)
-}  // namespace benchmarks::net::inet6
+}  // namespace benchmarks::inet6

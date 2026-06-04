@@ -27,8 +27,7 @@ class base_socket {
   base_socket(base_socket const & that);
   auto operator=(base_socket const & that) -> base_socket &;
   base_socket(base_socket && that) noexcept;
-  // NOLINTNEXTLINE(cppcoreguidelines-noexcept-move-operations)
-  auto operator=(base_socket && that) -> base_socket &;
+  auto operator=(base_socket && that) noexcept -> base_socket &;
   ~base_socket() noexcept;
 
  public:
@@ -61,34 +60,31 @@ class base_socket {
 
  public:
   [[nodiscard]] auto family() const -> family;
-  [[nodiscard]] auto type() const -> socktype;
-  [[nodiscard]] auto protocol() const -> protocol;
+  [[nodiscard]] auto socktype() const -> socktype;
 
  public:
-  void set_option(acceptconn option);
   void set_option(broadcast option);
   void set_option(keepalive option);
   void set_option(linger option);
-  void set_option(nodelay option);
   void set_option(nonblock option);
   void set_option(oobinline option);
   void set_option(rcvbuf option);
   void set_option(reuseaddr option);
   void set_option(reuseport option);
   void set_option(sndbuf option);
+  void set_option(nodelay option);
 
  public:
-  void get_option(acceptconn &) const;
-  void get_option(broadcast &) const;
-  void get_option(keepalive &) const;
-  void get_option(linger &) const;
-  void get_option(nodelay &) const;
-  void get_option(nonblock &) const;
-  void get_option(oobinline &) const;
-  void get_option(rcvbuf &) const;
-  void get_option(reuseaddr &) const;
-  void get_option(reuseport &) const;
-  void get_option(sndbuf &) const;
+  void get_option(broadcast & option) const;
+  void get_option(keepalive & option) const;
+  void get_option(linger & option) const;
+  void get_option(nonblock & option) const;
+  void get_option(oobinline & option) const;
+  void get_option(rcvbuf & option) const;
+  void get_option(reuseaddr & option) const;
+  void get_option(reuseport & option) const;
+  void get_option(sndbuf & option) const;
+  void get_option(nodelay & option) const;
 
  public:
   auto bind(base_sockaddr const & sockaddr) -> bind_status;

@@ -52,7 +52,7 @@ auto ip::to_string() const -> std::string {
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   if (::inet_ntop(AF_INET6, &data_, string.data(),
-                  static_cast<::socklen_t>(string.size())) == nullptr) {
+                  static_cast<platform::socklen_t>(string.size())) == nullptr) {
     throw std::runtime_error(
         std::format("could not serialize ip: {}", platform::errno_strerror()));
   }

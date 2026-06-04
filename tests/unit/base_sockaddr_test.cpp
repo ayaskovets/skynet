@@ -16,15 +16,14 @@ class sockaddr final : public skynet::base_sockaddr {
 
 }  // namespace
 
-TEST(net_sockets_base_sockaddr, size) {
+TEST(base_sockaddr, size) {
   static_assert(sizeof(sockaddr) == 24);
   static_assert(alignof(sockaddr) == 8);
 }
 
-class net_sockets_base_sockaddr
-    : public ::testing::TestWithParam<skynet::family> {};
+class base_sockaddr : public ::testing::TestWithParam<skynet::family> {};
 
-TEST_P(net_sockets_base_sockaddr, smoke) {
+TEST_P(base_sockaddr, smoke) {
   auto const & family = GetParam();
   sockaddr const sockaddr(family);
 
@@ -34,7 +33,7 @@ TEST_P(net_sockets_base_sockaddr, smoke) {
   EXPECT_NO_THROW(std::ignore = sockaddr.to_string());
 }
 
-TEST_P(net_sockets_base_sockaddr, copy) {
+TEST_P(base_sockaddr, copy) {
   auto const & family = GetParam();
   sockaddr const original(family);
   // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
@@ -46,7 +45,7 @@ TEST_P(net_sockets_base_sockaddr, copy) {
   EXPECT_EQ(original, copy);
 }
 
-TEST_P(net_sockets_base_sockaddr, move) {
+TEST_P(base_sockaddr, move) {
   auto const & family = GetParam();
   sockaddr original(family);
   sockaddr const move(std::move(original));
@@ -57,7 +56,7 @@ TEST_P(net_sockets_base_sockaddr, move) {
   EXPECT_NO_THROW(std::ignore = move.to_string());
 }
 
-INSTANTIATE_TEST_SUITE_P(net_sockets_base_sockaddr, net_sockets_base_sockaddr,
+INSTANTIATE_TEST_SUITE_P(base_sockaddr, base_sockaddr,
                          ::testing::Values(skynet::family::kInet,
                                            skynet::family::kInet6,
                                            skynet::family::kUnix));

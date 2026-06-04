@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace benchmarks::net::inet {
+namespace benchmarks::inet {
 // NOLINTBEGIN(misc-use-internal-linkage)
 
 constexpr void BM_net_inet_sockaddr_from_bytes(
@@ -39,4 +39,4 @@ constexpr void BM_net_inet_sockaddr_to_string(
 BENCHMARK(BM_net_inet_sockaddr_to_string);
 
 // NOLINTEND(misc-use-internal-linkage)
-}  // namespace benchmarks::net::inet
+}  // namespace benchmarks::inet

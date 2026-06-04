@@ -102,7 +102,7 @@ auto base_sockaddr::to_string() const -> std::string {
       string.resize(INET_ADDRSTRLEN + kColonStrlen + kPortStrlen);
 
       if (inet_ntop(AF_INET, &sockaddr->sin_addr, string.data(),
-                    static_cast<::socklen_t>(string.size())) == nullptr)
+                    static_cast<platform::socklen_t>(string.size())) == nullptr)
           [[unlikely]] {
         throw std::runtime_error(
             std::format("inet_ntop failed: {}", platform::errno_strerror()));
@@ -124,7 +124,7 @@ auto base_sockaddr::to_string() const -> std::string {
               AF_INET6, &sockaddr->sin6_addr,
               // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
               string.data() + kBracketStrlen,
-              static_cast<::socklen_t>(string.size())) == nullptr)
+              static_cast<platform::socklen_t>(string.size())) == nullptr)
           [[unlikely]] {
         throw std::runtime_error(
             std::format("inet_ntop failed: {}", platform::errno_strerror()));

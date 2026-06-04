@@ -62,7 +62,7 @@ auto ip::to_string() const -> std::string {
   string.resize(INET_ADDRSTRLEN);
 
   if (::inet_ntop(AF_INET, &data_, string.data(),
-                  static_cast<::socklen_t>(string.size())) == nullptr)
+                  static_cast<platform::socklen_t>(string.size())) == nullptr)
       [[unlikely]] {
     throw std::runtime_error(
         std::format("could not serialize ip: {}", platform::errno_strerror()));

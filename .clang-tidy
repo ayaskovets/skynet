@@ -14,6 +14,7 @@ Checks: "*,
         -hicpp-member-init,
         -hicpp-no-array-decay,
         -hicpp-noexcept-move,
-        -performance-noexcept-move-constructor"
+        -performance-noexcept-move-constructor,
+        -android-cloexec-accept"
 FormatStyle: none
 WarningsAsErrors: "*"

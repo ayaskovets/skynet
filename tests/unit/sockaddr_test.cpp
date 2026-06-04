@@ -5,7 +5,7 @@
 
 namespace tests::unit {
 
-TEST(queue, base_sockaddr) {
+TEST(sockaddr, base_sockaddr) {
   using sockaddr_t = skynet::base_sockaddr;
 
   static_assert(skynet::concepts::sockaddr<sockaddr_t>);
