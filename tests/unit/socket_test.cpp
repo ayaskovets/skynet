@@ -70,12 +70,12 @@ TEST(socket, unix_dgram_socket) {
 }
 
 TEST(socket, unix_stream_socket) {
-  using socket_t   = skynet::unix::dgram::socket;
+  using socket_t   = skynet::unix::stream::socket;
   using sockaddr_t = skynet::unix::sockaddr;
 
   static_assert(skynet::concepts::socket<socket_t, sockaddr_t>);
-  static_assert(!skynet::concepts::stream_socket<socket_t, sockaddr_t>);
-  static_assert(skynet::concepts::dgram_socket<socket_t, sockaddr_t>);
+  static_assert(skynet::concepts::stream_socket<socket_t, sockaddr_t>);
+  static_assert(!skynet::concepts::dgram_socket<socket_t, sockaddr_t>);
 }
 
 }  // namespace tests::unit

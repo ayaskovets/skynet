@@ -14,33 +14,33 @@ TEST(unix_stream_socket, size) {
 }
 
 TEST_T(unix_stream_socket, unconnected_send_receive,
-       skynet::unix::stream::socket);
+       skynet::unix::stream::socket, skynet::unix::sockaddr::kEmpty());
 
 TEST_T(unix_stream_socket, bind, skynet::unix::stream::socket,
-       skynet::unix::sockaddr("net_unix_stream_socket_bind"));
+       skynet::unix::sockaddr("unix_stream_socket_bind"));
 
 TEST_T(unix_stream_socket, connect, skynet::unix::stream::socket,
-       skynet::unix::sockaddr("net_unix_stream_socket_connect"),
+       skynet::unix::sockaddr("unix_stream_socket_connect"),
        skynet::connect_status::kRefused);
 
 TEST_T(unix_stream_socket, sockaddrs, skynet::unix::stream::socket,
-       skynet::unix::sockaddr("net_unix_stream_socket_bind_sockaddr"),
-       skynet::unix::sockaddr("net_unix_stream_socket_connect_sockaddr"),
+       skynet::unix::sockaddr("unix_stream_socket_bind_sockaddr"),
+       skynet::unix::sockaddr("unix_stream_socket_connect_sockaddr"),
        skynet::connect_status::kRefused);
 
 TEST_T(unix_stream_socket, unconnected_accept, skynet::unix::stream::socket,
-       skynet::unix::sockaddr("net_unix_stream_socket_unconnected_accept"));
+       skynet::unix::sockaddr("unix_stream_socket_unconnected_accept"));
 
 TEST_T(unix_stream_socket, blocking_handshake, skynet::unix::stream::socket,
-       skynet::unix::sockaddr("net_unix_stream_socket_blocking_handshake"));
+       skynet::unix::sockaddr("unix_stream_socket_blocking_handshake"));
 
 TEST_T(unix_stream_socket, nonblocking_handshake, skynet::unix::stream::socket,
-       skynet::unix::sockaddr("net_unix_stream_socket_nonblocking_handshake"),
+       skynet::unix::sockaddr("unix_stream_socket_nonblocking_handshake"),
        skynet::connect_status::kSuccess);
 
 TEST(unix_stream_socket, unlink) {
   skynet::unix::sockaddr const sockaddr(
-      skynet::unix::sockaddr("net_unix_stream_socket_unlink"));
+      skynet::unix::sockaddr("unix_stream_socket_unlink"));
 
   skynet::unix::stream::socket socket;
   EXPECT_EQ(socket.unlink_bind(sockaddr), skynet::bind_status::kSuccess);
@@ -50,6 +50,11 @@ TEST(unix_stream_socket, unlink) {
 
   socket.unlink_close();
   EXPECT_EQ(other.bind(sockaddr), skynet::bind_status::kSuccess);
+
+  skynet::unix::stream::socket reuseaddr_socket;
+  EXPECT_EQ(reuseaddr_socket.bind(sockaddr), skynet::bind_status::kInUse);
+  reuseaddr_socket.set_option(skynet::reuseaddr(true));
+  EXPECT_EQ(reuseaddr_socket.bind(sockaddr), skynet::bind_status::kSuccess);
 }
 
 }  // namespace tests::unit::unix::stream

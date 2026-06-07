@@ -16,13 +16,14 @@ class base_socket : public skynet::base_socket {
   ~base_socket() noexcept;
 
  public:
-  using skynet::base_socket::get_option;
-  using skynet::base_socket::recvfrom;
-  using skynet::base_socket::sendto;
-  using skynet::base_socket::set_option;
-
- public:
-  auto unlink_bind(skynet::unix::sockaddr const & sockaddr) noexcept(false)
+  /**
+   * @warning Bind for unix socket with SO_REUSEADDR enabled does smart unlink
+   * in case address is already in use and retries bind. This is supported only
+   * for this socket type specifically. For the base version use
+   * skynet::base_socket
+   */
+  auto bind(skynet::unix::sockaddr const & sockaddr) -> skynet::bind_status;
+  auto unlink_bind(skynet::unix::sockaddr const & sockaddr)
       -> skynet::bind_status;
   void unlink_close();
 };

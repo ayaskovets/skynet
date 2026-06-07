@@ -404,8 +404,7 @@ void base_socket::get_option(sndbuf & option) const {
   *option = static_cast<std::uint32_t>(std::max(0, optval));
 }
 
-auto base_socket::bind(base_sockaddr const & sockaddr) noexcept(false)
-    -> bind_status {
+auto base_socket::bind(base_sockaddr const & sockaddr) -> bind_status {
   auto const retval =
       ::bind(*native_handle(),
              static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
@@ -501,8 +500,7 @@ auto base_socket::accept(base_socket & socket) const -> accept_status {
   return accept_status::kSuccess;
 }
 
-auto base_socket::send(std::span<std::byte const> bytes) noexcept(false)
-    -> std::size_t {
+auto base_socket::send(std::span<std::byte const> bytes) -> std::size_t {
   auto const retval = ::send(*native_handle(), bytes.data(), bytes.size(), 0);
 
   if (retval == platform::kErrorRetval) [[unlikely]] {

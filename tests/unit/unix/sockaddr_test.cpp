@@ -29,12 +29,12 @@ TEST(unix_sockaddr, equality) {
 }
 
 TEST(unix_sockaddr, to_string) {
-  EXPECT_EQ(skynet::unix::sockaddr("net_unix_sockaddr_to_string").to_string(),
-            "net_unix_sockaddr_to_string");
+  EXPECT_EQ(skynet::unix::sockaddr("unix_sockaddr_to_string").to_string(),
+            "unix_sockaddr_to_string");
 }
 
 TEST(unix_sockaddr, format) {
-  skynet::unix::sockaddr const sockaddr("net_unix_sockaddr_to_string");
+  skynet::unix::sockaddr const sockaddr("unix_sockaddr_to_string");
   EXPECT_EQ(std::format("{}", sockaddr), sockaddr.to_string());
 }
 

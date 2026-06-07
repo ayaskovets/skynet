@@ -1,6 +1,7 @@
 #include <skynet/unix/base_socket.hpp>
 
-#include "platform/platform.hpp"  // IWYU pragma: keep
+#include "../base_socket_impl.hpp"  // IWYU pragma: keep
+#include "platform/platform.hpp"    // IWYU pragma: keep
 
 namespace skynet::unix {
 
@@ -12,7 +13,7 @@ base_socket::base_socket(skynet::socktype type)
                           skynet::protocol::kDefault) {}
 
 base_socket::~base_socket() noexcept {
-  if (*this == base_socket(uninitialized_t{})) {
+  if (*native_handle() == platform::kInvalidNativeHandle) {
     return;
   }
 
@@ -25,6 +26,22 @@ base_socket::~base_socket() noexcept {
 
   if (!sockaddr.get_path().empty()) {
     std::ignore = platform::unlink(sockaddr.get_path());
+  }
+}
+
+auto base_socket::bind(skynet::unix::sockaddr const & sockaddr)
+    -> skynet::bind_status {
+  switch (skynet::base_socket::bind(sockaddr)) {
+    case skynet::bind_status::kInUse: {
+      reuseaddr option{};
+      get_option(option);
+      if (*option) {
+        return unlink_bind(sockaddr);
+      }
+      return skynet::bind_status::kInUse;
+    }
+    case skynet::bind_status::kSuccess:
+      return skynet::bind_status::kSuccess;
   }
 }
 
@@ -41,7 +58,7 @@ auto base_socket::unlink_bind(skynet::unix::sockaddr const & sockaddr)
 }
 
 void base_socket::unlink_close() {
-  if (*this == base_socket(uninitialized_t{})) {
+  if (*native_handle() == platform::kInvalidNativeHandle) {
     return;
   }
 
