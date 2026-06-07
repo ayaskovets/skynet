@@ -29,37 +29,58 @@ generate_export_header(skynet EXPORT_FILE_NAME
                        "${CMAKE_CURRENT_BINARY_DIR}/include/skynet/export.hpp")
 
 set(SOURCES
-    src/inet/ip.cpp
-    src/inet/port.cpp
-    src/inet/sockaddr.cpp
-    src/inet6/ip.cpp
-    src/inet6/sockaddr.cpp
-    src/platform/platform.hpp
-    src/platform/unix.hpp
-    src/unix/sockaddr.cpp
     src/base_sockaddr.cpp
+    src/base_socket_impl.hpp
     src/base_socket.cpp
     src/dns.cpp
     src/family.cpp
+    src/inet/ip.cpp
+    src/inet/port.cpp
+    src/inet/sockaddr.cpp
+    src/inet/tcp/socket.cpp
+    src/inet/udp/socket.cpp
+    src/inet6/ip.cpp
+    src/inet6/sockaddr.cpp
+    src/inet6/tcp/socket.cpp
+    src/inet6/udp/socket.cpp
+    src/platform/platform.hpp
+    src/platform/unix.hpp
     src/protocol.cpp
-    src/socktype.cpp)
+    src/socktype.cpp
+    src/unix/base_socket.cpp
+    src/unix/dgram/socket.cpp
+    src/unix/sockaddr.cpp
+    src/unix/stream/socket.cpp)
 set(HEADERS
     "${CMAKE_CURRENT_BINARY_DIR}/include/skynet/export.hpp"
-    include/skynet/inet/ip.hpp
-    include/skynet/inet/port.hpp
-    include/skynet/inet/sockaddr.hpp
-    include/skynet/inet6/ip.hpp
-    include/skynet/inet6/port.hpp
-    include/skynet/inet6/sockaddr.hpp
-    include/skynet/platform/platform.hpp
-    include/skynet/platform/unix.hpp
-    include/skynet/unix/sockaddr.hpp
     include/skynet/base_sockaddr.hpp
     include/skynet/base_socket.hpp
     include/skynet/dns.hpp
     include/skynet/family.hpp
+    include/skynet/inet/ip.hpp
+    include/skynet/inet/port.hpp
+    include/skynet/inet/sockaddr.hpp
+    include/skynet/inet/tcp/socket.hpp
+    include/skynet/inet/udp/socket.hpp
+    include/skynet/inet6/ip.hpp
+    include/skynet/inet6/port.hpp
+    include/skynet/inet6/sockaddr.hpp
+    include/skynet/inet6/tcp/socket.hpp
+    include/skynet/inet6/udp/socket.hpp
+    include/skynet/network_byte_order.hpp
+    include/skynet/options.hpp
+    include/skynet/platform/platform.hpp
+    include/skynet/platform/unix.hpp
     include/skynet/protocol.hpp
-    include/skynet/socktype.hpp)
+    include/skynet/sockaddr.hpp
+    include/skynet/socket.hpp
+    include/skynet/socktype.hpp
+    include/skynet/status.hpp
+    include/skynet/uninitialized.hpp
+    include/skynet/unix/base_socket.hpp
+    include/skynet/unix/dgram/socket.hpp
+    include/skynet/unix/sockaddr.hpp
+    include/skynet/unix/stream/socket.hpp)
 
 # ------------------------------------------------------------------------------
 # target
