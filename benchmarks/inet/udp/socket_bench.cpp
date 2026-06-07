@@ -8,6 +8,7 @@
 #include "../../templates/templates.hpp"
 
 namespace benchmarks::inet::udp {
+// NOLINTBEGIN(misc-use-internal-linkage,cppcoreguidelines-avoid-magic-numbers)
 
 BENCHMARK_T(inet_udp_socket, throughput, skynet::inet::udp::socket,
             skynet::inet::sockaddr(skynet::inet::ip::kLoopback(),
@@ -17,4 +18,5 @@ BENCHMARK_T(inet_udp_socket, throughput, skynet::inet::udp::socket,
     ->Args({1048576, 128})
     ->Unit(benchmark::TimeUnit::kMicrosecond);
 
+// NOLINTEND(misc-use-internal-linkage,cppcoreguidelines-avoid-magic-numbers)
 }  // namespace benchmarks::inet::udp

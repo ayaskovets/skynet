@@ -8,6 +8,7 @@
 #include "../../templates/templates.hpp"
 
 namespace benchmarks::inet6::tcp {
+// NOLINTBEGIN(misc-use-internal-linkage,cppcoreguidelines-avoid-magic-numbers)
 
 BENCHMARK_T(inet6_tcp_socket, nonblock_handshake, skynet::inet6::tcp::socket,
             skynet::inet6::sockaddr(skynet::inet6::ip::kLoopback(),
@@ -22,4 +23,5 @@ BENCHMARK_T(inet6_tcp_socket, throughput, skynet::inet6::tcp::socket,
     ->Args({1048576, 128})
     ->Unit(benchmark::TimeUnit::kMicrosecond);
 
+// NOLINTEND(misc-use-internal-linkage,cppcoreguidelines-avoid-magic-numbers)
 }  // namespace benchmarks::inet6::tcp
