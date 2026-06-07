@@ -14,7 +14,9 @@ class socket final : public skynet::base_socket {
 
  public:
   using skynet::base_socket::get_option;
+  using skynet::base_socket::recv;
   using skynet::base_socket::recvfrom;
+  using skynet::base_socket::send;
   using skynet::base_socket::sendto;
   using skynet::base_socket::set_option;
 };

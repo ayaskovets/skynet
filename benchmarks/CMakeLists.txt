@@ -31,6 +31,9 @@ set(SOURCES
     inet6/tcp/socket_bench.cpp
     inet6/udp/socket_bench.cpp
     inet6/sockaddr_bench.cpp
+    unix/stream/socket_bench.cpp
+    unix/dgram/socket_bench.cpp
+    unix/sockaddr_bench.cpp
     unix/sockaddr_bench.cpp
     dns_bench.cpp
     main.cpp)

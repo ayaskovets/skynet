@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cerrno>
+#include <filesystem>
 #include <system_error>
 
 #include <arpa/inet.h>
@@ -97,6 +98,10 @@ constexpr auto accept(native_handle_t srv_handle) noexcept -> native_handle_t {
     std::ignore = ::fcntl(handle, F_SETFD, FD_CLOEXEC);
   }
   return handle;
+}
+
+constexpr auto unlink(std::filesystem::path const & path) noexcept -> int {
+  return ::unlink(path.c_str());
 }
 
 constexpr auto get_last_error() noexcept -> std::errc {

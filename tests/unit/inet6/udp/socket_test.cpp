@@ -15,8 +15,7 @@ TEST(inet6_udp_socket, size) {
   static_assert(alignof(skynet::inet6::udp::socket) == 4);
 }
 
-TEST_T(inet6_udp_socket, dgram_unconnected_send_receive,
-       skynet::inet6::udp::socket,
+TEST_T(inet6_udp_socket, unconnected_send_receive, skynet::inet6::udp::socket,
        skynet::inet6::sockaddr(skynet::inet6::ip::kLoopback(),
                                skynet::inet6::port(9999)));
 
@@ -36,14 +35,13 @@ TEST_T(inet6_udp_socket, sockaddrs, skynet::inet6::udp::socket,
                                skynet::inet6::port(9996)),
        skynet::connect_status::kSuccess);
 
-TEST_T(inet6_udp_socket, dgram_blocking_handshake, skynet::inet6::udp::socket,
+TEST_T(inet6_udp_socket, blocking_handshake, skynet::inet6::udp::socket,
        skynet::inet6::sockaddr(skynet::inet6::ip::kLoopback(),
                                skynet::inet6::port(9995)),
        skynet::inet6::sockaddr(skynet::inet6::ip::kLoopback(),
                                skynet::inet6::port(9996)));
 
-TEST_T(inet6_udp_socket, dgram_nonblocking_handshake,
-       skynet::inet6::udp::socket,
+TEST_T(inet6_udp_socket, nonblocking_handshake, skynet::inet6::udp::socket,
        skynet::inet6::sockaddr(skynet::inet6::ip::kLoopback(),
                                skynet::inet6::port(9995)),
        skynet::inet6::sockaddr(skynet::inet6::ip::kLoopback(),

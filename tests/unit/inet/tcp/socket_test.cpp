@@ -14,8 +14,7 @@ TEST(inet_tcp_socket, size) {
   static_assert(alignof(skynet::inet::tcp::socket) == 4);
 }
 
-TEST_T(inet_tcp_socket, stream_unconnected_send_receive,
-       skynet::inet::tcp::socket);
+TEST_T(inet_tcp_socket, unconnected_send_receive, skynet::inet::tcp::socket);
 
 TEST_T(inet_tcp_socket, bind, skynet::inet::tcp::socket,
        skynet::inet::sockaddr(skynet::inet::ip::kLoopback(),
@@ -37,11 +36,11 @@ TEST_T(inet_tcp_socket, unconnected_accept, skynet::inet::tcp::socket,
        skynet::inet::sockaddr(skynet::inet::ip::kLoopback(),
                               skynet::inet::port(9999)));
 
-TEST_T(inet_tcp_socket, stream_blocking_handshake, skynet::inet::tcp::socket,
+TEST_T(inet_tcp_socket, blocking_handshake, skynet::inet::tcp::socket,
        skynet::inet::sockaddr(skynet::inet::ip::kLoopback(),
                               skynet::inet::port(9995)));
 
-TEST_T(inet_tcp_socket, stream_nonblocking_handshake, skynet::inet::tcp::socket,
+TEST_T(inet_tcp_socket, nonblocking_handshake, skynet::inet::tcp::socket,
        skynet::inet::sockaddr(skynet::inet::ip::kLoopback(),
                               skynet::inet::port(9996)),
        skynet::connect_status::kPending);

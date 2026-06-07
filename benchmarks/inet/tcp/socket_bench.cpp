@@ -9,12 +9,12 @@
 
 namespace benchmarks::inet::tcp {
 
-BENCHMARK_T(inet_tcp, nonblock_handshake, skynet::inet::tcp::socket,
+BENCHMARK_T(inet_tcp_socket, nonblock_handshake, skynet::inet::tcp::socket,
             skynet::inet::sockaddr(skynet::inet::ip::kLoopback(),
                                    skynet::inet::port(8000)))
     ->Unit(benchmark::TimeUnit::kMicrosecond);
 
-BENCHMARK_T(inet_tcp, stream_throughput, skynet::inet::tcp::socket,
+BENCHMARK_T(inet_tcp_socket, throughput, skynet::inet::tcp::socket,
             skynet::inet::sockaddr(skynet::inet::ip::kLoopback(),
                                    skynet::inet::port(8000)))
     ->Threads(2)

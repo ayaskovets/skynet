@@ -7,7 +7,6 @@
 
 #include "base_socket_impl.hpp"
 #include "platform/platform.hpp"  // IWYU pragma: keep
-#include "platform/unix.hpp"
 
 namespace skynet {
 

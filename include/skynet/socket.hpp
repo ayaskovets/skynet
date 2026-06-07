@@ -91,6 +91,9 @@ template <typename T, typename Sockaddr>
 concept dgram_socket =
     socket<T, Sockaddr> &&
     requires(T socket, Sockaddr sockaddr, std::span<std::byte> bytes) {
+      { socket.send(bytes) } -> std::same_as<size_t>;
+      { socket.recv(bytes) } -> std::same_as<size_t>;
+
       { socket.sendto(bytes, sockaddr) } -> std::same_as<size_t>;
       { socket.recvfrom(bytes, sockaddr) } -> std::same_as<size_t>;
     };

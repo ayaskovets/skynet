@@ -6,8 +6,8 @@ namespace skynet {
 
 auto to_native_protocol(protocol protocol) noexcept -> int {
   switch (protocol) {
-    case protocol::kIp:
-      return IPPROTO_IP;
+    case protocol::kDefault:
+      return 0;
     case protocol::kTcp:
       return IPPROTO_TCP;
     case protocol::kUdp:
@@ -17,8 +17,8 @@ auto to_native_protocol(protocol protocol) noexcept -> int {
 
 auto from_native_protocol(int native_protocol) -> protocol {
   switch (native_protocol) {
-    case IPPROTO_IP:
-      return protocol::kIp;
+    case 0:
+      return protocol::kDefault;
     case IPPROTO_TCP:
       return protocol::kTcp;
     case IPPROTO_UDP:

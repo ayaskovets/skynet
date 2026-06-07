@@ -3,8 +3,6 @@
 
 #include <gtest/gtest.h>
 
-#include "skynet/socktype.hpp"
-
 namespace tests::unit {
 
 namespace {

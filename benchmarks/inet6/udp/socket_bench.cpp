@@ -9,7 +9,7 @@
 
 namespace benchmarks::inet6::udp {
 
-BENCHMARK_T(inet6_udp, dgram_throughput, skynet::inet6::udp::socket,
+BENCHMARK_T(inet6_udp_socket, throughput, skynet::inet6::udp::socket,
             skynet::inet6::sockaddr(skynet::inet6::ip::kLoopback(),
                                     skynet::inet6::port(8000)))
     ->Threads(2)
