@@ -6,13 +6,13 @@
 namespace skynet {
 
 /**
- * @brief Address family
+ * @brief Address/protocol family
  */
 enum class family : std::uint8_t {
-  kUnspec,
-  kInet,
-  kInet6,
-  kUnix,
+  kUnspec,  ///< Not specified. Used in address resolution
+  kInet,    ///< IPv4
+  kInet6,   ///< IPv6
+  kUnix,    ///< UNIX
 };
 
 auto to_native_family(family family) noexcept -> int;

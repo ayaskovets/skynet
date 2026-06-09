@@ -9,12 +9,12 @@ namespace skynet {
  * @brief Protocol type
  */
 enum class socktype : std::uint8_t {
-  kUnspec,
-  kStream,
-  kDgram,
-  kRaw,
-  kRdm,
-  kSeqpacket,
+  kUnspec,     ///< Not specified. Used in address resolution
+  kStream,     ///< Stream socket
+  kDgram,      ///< Datagram socket
+  kRaw,        ///< Raw socket, pass the specific protocol value
+  kRdm,        ///< Reliably delivered messages socket
+  kSeqpacket,  ///< Sequenced packet socket
 };
 
 auto to_native_socktype(socktype socktype) noexcept -> int;
