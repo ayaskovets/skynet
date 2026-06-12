@@ -29,7 +29,7 @@ auto base_sockaddr::native_sockaddr() const noexcept -> void const * {
 }
 
 auto base_sockaddr::operator==(base_sockaddr const & that) const -> bool {
-  switch (impl_.get<sockaddr>()->sa_family) {
+  switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET: {
       auto const * this_sockaddr = impl_.get<::sockaddr_in>();
       auto const * that_sockaddr = that.impl_.get<::sockaddr_in>();
