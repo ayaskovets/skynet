@@ -43,6 +43,7 @@ set(SOURCES
     src/inet6/sockaddr.cpp
     src/inet6/tcp/socket.cpp
     src/inet6/udp/socket.cpp
+    src/multiplexing.cpp
     src/platform/platform.hpp
     src/platform/unix.hpp
     src/protocol.cpp
@@ -67,6 +68,7 @@ set(HEADERS
     include/skynet/inet6/sockaddr.hpp
     include/skynet/inet6/tcp/socket.hpp
     include/skynet/inet6/udp/socket.hpp
+    include/skynet/multiplexing.hpp
     include/skynet/network_byte_order.hpp
     include/skynet/options.hpp
     include/skynet/platform/platform.hpp

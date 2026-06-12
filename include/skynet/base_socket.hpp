@@ -19,6 +19,11 @@ namespace skynet {
  * @brief Socket base class. Non-constructible by itself
  */
 class base_socket {
+  /**
+   * @note Required for poller to access native_handle()
+   */
+  friend class poller;
+
  protected:
   explicit base_socket(uninitialized_t) noexcept;
   base_socket(family family, socktype type, protocol protocol);
