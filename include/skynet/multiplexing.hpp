@@ -28,8 +28,8 @@ class poller final : public swiss::non_copyable {
 
  public:
   enum class callback_result : std::uint8_t {
-    kClose,
-    kContinue,
+    kClose,      ///< Close the socket after the callback exit
+    kDoNothing,  ///< Do nothing after the callback exit
   };
   using callback_t =
       swiss::noexcept_function<callback_result, base_socket const &, events_t>;
@@ -42,11 +42,25 @@ class poller final : public swiss::non_copyable {
 
  public:
   /**
+   * @brief Return the capacity of the underlying storage in number of sockets
+   */
+  [[nodiscard]] auto capacity() const noexcept -> std::size_t;
+
+  /**
+   * @brief Return the number of sockets that are polled
+   */
+  [[nodiscard]] auto size() const noexcept -> std::size_t;
+
+ public:
+  /**
    * @brief Poll for selected events for the socket
    * @note Safe to call from the callback
    * @return True if the socket was inserted
    */
   void insert(base_socket sock, events_t events);
+
+ public:
+  void shrink_to_fit();
 
  public:
   /**

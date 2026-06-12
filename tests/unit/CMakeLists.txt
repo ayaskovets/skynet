@@ -38,6 +38,7 @@ set(SOURCES
     inet6/sockaddr_test.cpp
     inet6/tcp/socket_test.cpp
     inet6/udp/socket_test.cpp
+    multiplexing_test.cpp
     sockaddr_test.cpp
     socket_test.cpp
     unix/dgram/socket_test.cpp

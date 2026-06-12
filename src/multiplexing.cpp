@@ -59,14 +59,26 @@ poller::~poller() noexcept {
   auto const & [polling, pending] = *pimpl_;
 
   for (::pollfd const pollfd : polling) {
-    base_socket socket(uninitialized_t{});
-    *socket.native_handle() = pollfd.fd;
+    base_socket sock(uninitialized_t{});
+    *sock.native_handle() = pollfd.fd;
   }
 
   for (::pollfd const pollfd : pending) {
-    base_socket socket(uninitialized_t{});
-    *socket.native_handle() = pollfd.fd;
+    base_socket sock(uninitialized_t{});
+    *sock.native_handle() = pollfd.fd;
   }
+}
+
+auto poller::capacity() const noexcept -> std::size_t {
+  auto const & [polling, pending] = *pimpl_;
+
+  return polling.capacity() + pending.capacity();
+}
+
+auto poller::size() const noexcept -> std::size_t {
+  auto const & [polling, pending] = *pimpl_;
+
+  return polling.size() + pending.size();
 }
 
 void poller::insert(base_socket sock, events_t events) {
@@ -88,6 +100,19 @@ void poller::insert(base_socket sock, events_t events) {
    * @note Manually reset socket handle so it does not get closed
    */
   *sock.native_handle() = platform::kInvalidNativeHandle;
+}
+
+void poller::shrink_to_fit() {
+  auto & [polling, pending] = *pimpl_;
+
+  if (!pending.empty()) {
+    polling.reserve(polling.size() + pending.size());
+    polling.insert_range(polling.end(), pending);
+    pending.clear();
+  }
+
+  polling.shrink_to_fit();
+  pending.shrink_to_fit();
 }
 
 void poller::try_poll() {
@@ -134,9 +159,13 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
 
     switch (cb_result) {
       case callback_result::kClose:
-        socket.close();
+        /**
+         * @note Socket gets closed at the end of iteration
+         */
+        polling.erase(
+            std::next(polling.begin(), static_cast<std::ptrdiff_t>(i)));
         break;
-      case callback_result::kContinue:
+      case callback_result::kDoNothing:
         *socket.native_handle() = platform::kInvalidNativeHandle;
         break;
     }
