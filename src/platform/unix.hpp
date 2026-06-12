@@ -61,7 +61,7 @@ constexpr auto create_native_handle(int family, int type, int protocol) noexcept
 constexpr auto copy_native_handle(native_handle_t handle) noexcept
     -> native_handle_t {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
-  return ::fcntl(handle, F_DUPFD_CLOEXEC);
+  return ::fcntl(handle, F_DUPFD_CLOEXEC, 0);
 }
 
 constexpr auto close_native_handle(native_handle_t handle) noexcept -> int {
