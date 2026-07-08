@@ -5,7 +5,7 @@
 namespace skynet {
 
 base_sockaddr::base_sockaddr(enum family family)
-    : impl_([family] {
+    : impl_([family] -> swiss::unchecked_any {
         switch (family) {
           case family::kUnspec:
             throw std::invalid_argument(

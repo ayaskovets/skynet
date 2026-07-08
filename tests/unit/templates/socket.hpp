@@ -126,7 +126,7 @@ constexpr void blocking_handshake(Sockaddr const & sockaddr) noexcept
   server.bind(sockaddr);
   server.listen(1);
 
-  std::jthread const server_thread([&server, &data] {
+  std::jthread const server_thread([&server, &data] -> void {
     Socket peer;
     EXPECT_EQ(server.accept(peer), skynet::accept_status::kSuccess);
 
@@ -160,7 +160,7 @@ constexpr void blocking_handshake(Sockaddr const & server_sockaddr,
   server.set_option(skynet::reuseport(true));
   server.bind(server_sockaddr);
 
-  std::jthread const server_thread([&server, &client_sockaddr, &data] {
+  std::jthread const server_thread([&server, &client_sockaddr, &data] -> void {
     auto peer(client_sockaddr);
     std::vector<std::byte> buffer(data.size());
     EXPECT_EQ(server.recvfrom(buffer, peer), data.size());

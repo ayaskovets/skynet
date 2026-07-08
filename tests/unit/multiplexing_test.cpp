@@ -18,7 +18,8 @@ TEST(multiplexing, size) {
 TEST(multiplexing, move) {
   std::size_t calls = 0;
   skynet::poller moved_from(
-      [&calls](skynet::base_socket const &, skynet::poller::events_t) noexcept {
+      [&calls](skynet::base_socket const &, skynet::poller::events_t) noexcept
+          -> skynet::poller::callback_result {
         calls += 1;
         return skynet::poller::callback_result::kDoNothing;
       });
@@ -32,7 +33,8 @@ TEST(multiplexing, move) {
 TEST(multiplexing, callback_smoke) {
   std::size_t calls = 0;
   skynet::poller poller([&calls](skynet::base_socket const & sock,
-                                 skynet::poller::events_t) noexcept {
+                                 skynet::poller::events_t) noexcept
+                            -> skynet::poller::callback_result {
     EXPECT_EQ(sock.family(), skynet::family::kInet);
     EXPECT_EQ(sock.socktype(), skynet::socktype::kStream);
     calls += 1;
@@ -64,7 +66,8 @@ TEST(multiplexing, callback_smoke) {
 TEST(multiplexing, destructor) {
   std::size_t calls = 0;
   skynet::poller poller(
-      [&calls](skynet::base_socket const &, skynet::poller::events_t) noexcept {
+      [&calls](skynet::base_socket const &, skynet::poller::events_t) noexcept
+          -> skynet::poller::callback_result {
         calls += 1;
         return skynet::poller::callback_result::kDoNothing;
       });
