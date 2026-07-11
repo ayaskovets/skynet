@@ -9,7 +9,7 @@ base_sockaddr::base_sockaddr(enum family family)
         switch (family) {
           case family::kUnspec:
             throw std::invalid_argument(
-                std::format("invalid sockaddr family: {}", family));
+                "base_sockaddr::base_sockaddr(): invalid sockaddr family");
           case family::kInet:
             return swiss::unchecked_any(::sockaddr_in{.sin_family = AF_INET});
           case family::kInet6:
@@ -55,7 +55,7 @@ auto base_sockaddr::operator==(base_sockaddr const & that) const -> bool {
                           sizeof(::sockaddr_un{}.sun_path)) == 0;
     }
     [[unlikely]] default:
-      throw std::runtime_error("unimplemented");
+      throw std::runtime_error("base_sockaddr::operator==(): unimplemented");
   }
 }
 
@@ -72,7 +72,7 @@ auto base_sockaddr::length() const -> std::size_t {
     case AF_UNIX:
       return sizeof(::sockaddr_un);
     [[unlikely]] default:
-      throw std::runtime_error("unimplemented");
+      throw std::runtime_error("base_sockaddr::length(): unimplemented");
   }
 }
 
@@ -85,7 +85,7 @@ auto base_sockaddr::family() const -> enum family {
     case AF_UNIX:
       return family::kUnix;
     [[unlikely]] default:
-      throw std::runtime_error("unimplemented");
+      throw std::runtime_error("base_sockaddr::family(): unimplemented");
   }
 }
 
@@ -105,7 +105,8 @@ auto base_sockaddr::to_string() const -> std::string {
                     static_cast<platform::socklen_t>(string.size())) == nullptr)
           [[unlikely]] {
         throw std::runtime_error(
-            std::format("inet_ntop failed: {}", platform::errno_strerror()));
+            std::format("base_sockaddr::to_string(): inet_ntop error {}",
+                        platform::errno_strerror()));
       }
 
       string.resize(std::min(string.capacity(), string.find('\0')));
@@ -127,7 +128,8 @@ auto base_sockaddr::to_string() const -> std::string {
               static_cast<platform::socklen_t>(string.size())) == nullptr)
           [[unlikely]] {
         throw std::runtime_error(
-            std::format("inet_ntop failed: {}", platform::errno_strerror()));
+            std::format("base_sockaddr::to_string(): inet_ntop error {}",
+                        platform::errno_strerror()));
       }
 
       string.resize(std::min(string.capacity(), string.find('\0')));
@@ -146,7 +148,7 @@ auto base_sockaddr::to_string() const -> std::string {
       break;
     }
     [[unlikely]] default:
-      throw std::runtime_error("unimplemented");
+      throw std::runtime_error("base_sockaddr::to_string(): unimplemented");
   }
   return string;
 }

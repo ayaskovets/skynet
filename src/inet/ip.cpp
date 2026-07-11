@@ -36,7 +36,7 @@ ip::ip(network_byte_order_t, std::uint32_t bytes) noexcept : data_(bytes) {}
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 ip::ip(std::string_view string) {
   if (string.size() > INET_ADDRSTRLEN) [[unlikely]] {
-    throw std::invalid_argument(std::format("invalid ip: {}", string));
+    throw std::invalid_argument("ip::ip(): invalid address");
   }
 
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
@@ -44,10 +44,10 @@ ip::ip(std::string_view string) {
     case 1:
       break;
     case 0:
-      throw std::invalid_argument(std::format("invalid ip: {}", string));
+      throw std::invalid_argument("ip::ip(): invalid address");
     default:
-      throw std::invalid_argument(
-          std::format("invalid ip {}: {}", string, platform::errno_strerror()));
+      throw std::invalid_argument(std::format("ip::ip(): inet_pton error {}",
+                                              platform::errno_strerror()));
   }
 }
 
@@ -64,8 +64,8 @@ auto ip::to_string() const -> std::string {
   if (::inet_ntop(AF_INET, &data_, string.data(),
                   static_cast<platform::socklen_t>(string.size())) == nullptr)
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("could not serialize ip: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("ip::to_string(): inet_ntop error {}",
+                                         platform::errno_strerror()));
   }
 
   string.resize(std::min(string.capacity(), string.find('\0')));

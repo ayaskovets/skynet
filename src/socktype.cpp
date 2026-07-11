@@ -36,8 +36,8 @@ auto from_native_socktype(int native_socktype) -> socktype {
     case SOCK_SEQPACKET:
       return socktype::kSeqpacket;
     [[unlikely]] default:
-      throw std::invalid_argument(std::format(
-          "invalid/unimplemented native socktype {}", native_socktype));
+      throw std::invalid_argument(
+          "from_native_socktype(): invalid native socktype");
   }
 }
 

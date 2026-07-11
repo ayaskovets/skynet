@@ -24,8 +24,8 @@ auto from_native_protocol(int native_protocol) -> protocol {
     case IPPROTO_UDP:
       return protocol::kUdp;
     [[unlikely]] default:
-      throw std::invalid_argument(std::format(
-          "invalid/unimplemented native protocol {}", native_protocol));
+      throw std::invalid_argument(
+          "from_native_protocol(): invalid native protocol");
   }
 }
 

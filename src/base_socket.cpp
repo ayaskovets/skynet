@@ -22,7 +22,8 @@ base_socket::base_socket(enum family family, enum socktype socktype,
 
         if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
           throw std::runtime_error(
-              std::format("socket failed: {}", platform::errno_strerror()));
+              std::format("base_socket::base_socket(): socket error {}",
+                          platform::errno_strerror()));
         }
 
         // NOLINTNEXTLINE(modernize-return-braced-init-list)
@@ -39,7 +40,8 @@ base_socket::base_socket(base_socket const & that)
       platform::copy_native_handle(*that.native_handle());
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
     throw std::runtime_error(
-        std::format("failed to clone socket: {}", platform::errno_strerror()));
+        std::format("base_socket::base_socket(): clone error {}",
+                    platform::errno_strerror()));
   }
 
   *pimpl_ = impl(handle);
@@ -54,7 +56,8 @@ auto base_socket::operator=(base_socket const & that) -> base_socket & {
       platform::copy_native_handle(*that.native_handle());
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
     throw std::runtime_error(
-        std::format("failed to clone socket: {} ", platform::errno_strerror()));
+        std::format("base_socket::operator==(): clone error {}",
+                    platform::errno_strerror()));
   }
 
   if (*native_handle() != platform::kInvalidNativeHandle) {
@@ -98,14 +101,14 @@ auto base_socket::native_handle() noexcept -> impl & { return *pimpl_; }
 
 void base_socket::close() {
   if (*native_handle() == platform::kInvalidNativeHandle) [[unlikely]] {
-    throw std::runtime_error("close on a closed socket");
+    throw std::runtime_error("base_socket::close(): double close");
   }
 
   auto const retval = platform::close_native_handle(
       std::exchange(*native_handle(), platform::kInvalidNativeHandle));
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("close failed: {} ", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::close(): close error {}",
+                                         platform::errno_strerror()));
   }
 }
 
@@ -127,7 +130,8 @@ auto base_socket::family() const -> skynet::family {
 
   if (retval == platform::kErrorRetval) {
     throw std::runtime_error(
-        std::format("getsockname failed: {}", platform::errno_strerror()));
+        std::format("base_socket::family(): getsockname error {}",
+                    platform::errno_strerror()));
   }
 
   return from_native_family(storage.ss_family);
@@ -142,7 +146,8 @@ auto base_socket::socktype() const -> skynet::socktype {
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
     throw std::runtime_error(
-        std::format("getsockopt failed: {} ", platform::errno_strerror()));
+        std::format("base_socket::socktype(): getsockopt error {} ",
+                    platform::errno_strerror()));
   }
 
   return from_native_socktype(optval);
@@ -154,8 +159,8 @@ void base_socket::set_option(broadcast option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set broadcast failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::set_option(broadcast): {}", platform::errno_strerror()));
   }
 }
 
@@ -165,8 +170,8 @@ void base_socket::set_option(keepalive option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set keepalive failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::set_option(keepalive): {}", platform::errno_strerror()));
   }
 }
 
@@ -178,8 +183,8 @@ void base_socket::set_option(linger option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set nodelay failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::set_option(linger): {}",
+                                         platform::errno_strerror()));
   }
 }
 
@@ -189,16 +194,16 @@ void base_socket::set_option(nodelay option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set nodelay failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::set_option(nodelay): {}",
+                                         platform::errno_strerror()));
   }
 }
 
 void base_socket::set_option(nonblock option) {
   auto const retval = platform::set_nonblock(*native_handle(), *option ? 1 : 0);
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set nonblock failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::set_option(nonblock): {}", platform::errno_strerror()));
   }
 }
 
@@ -208,8 +213,8 @@ void base_socket::set_option(oobinline option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set oobinline failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::set_option(oobinline): {}", platform::errno_strerror()));
   }
 }
 
@@ -220,8 +225,8 @@ void base_socket::set_option(rcvbuf option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set reuseport failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::set_option(rcvbuf): {}",
+                                         platform::errno_strerror()));
   }
 }
 
@@ -231,8 +236,8 @@ void base_socket::set_option(reuseaddr option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set reuseaddr failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::set_option(reuseaddr): {}", platform::errno_strerror()));
   }
 }
 
@@ -242,8 +247,8 @@ void base_socket::set_option(reuseport option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set reuseport failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::set_option(reuseport): {}", platform::errno_strerror()));
   }
 }
 
@@ -254,8 +259,8 @@ void base_socket::set_option(sndbuf option) {
                                    &optval, sizeof(optval));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("set sndbuf failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::set_option(sndbuf): {}",
+                                         platform::errno_strerror()));
   }
 }
 
@@ -267,8 +272,8 @@ void base_socket::get_option(broadcast & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get broadcast failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::get_option(broadcast): {}", platform::errno_strerror()));
   }
 
   *option = (optval != 0);
@@ -282,8 +287,8 @@ void base_socket::get_option(keepalive & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get keepalive failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::get_option(keepalive): {}", platform::errno_strerror()));
   }
 
   *option = (optval != 0);
@@ -297,8 +302,8 @@ void base_socket::get_option(linger & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get nodelay failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::get_option(linger): {}",
+                                         platform::errno_strerror()));
   }
 
   *option = (optval.l_onoff == 0 ? std::optional<std::chrono::seconds>()
@@ -313,8 +318,8 @@ void base_socket::get_option(nodelay & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get nodelay failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::get_option(nodelay): {}",
+                                         platform::errno_strerror()));
   }
 
   *option = (optval != 0);
@@ -323,8 +328,8 @@ void base_socket::get_option(nodelay & option) const {
 void base_socket::get_option(nonblock & option) const {
   auto const retval = platform::get_nonblock(*native_handle());
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get nonblock failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::get_option(nonblock): {}", platform::errno_strerror()));
   }
 
   *option = (retval != 0);
@@ -338,8 +343,8 @@ void base_socket::get_option(oobinline & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get oobinline failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::get_option(oobinline): {}", platform::errno_strerror()));
   }
 
   *option = (optval != 0);
@@ -353,8 +358,8 @@ void base_socket::get_option(rcvbuf & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get rcvbuf failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::get_option(rcvbuf): {}",
+                                         platform::errno_strerror()));
   }
 
   *option = static_cast<std::uint32_t>(std::max(0, optval));
@@ -368,8 +373,8 @@ void base_socket::get_option(reuseaddr & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get reuseaddr failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::get_option(reuseaddr): {}", platform::errno_strerror()));
   }
 
   *option = (optval != 0);
@@ -382,8 +387,8 @@ void base_socket::get_option(reuseport & option) const {
                                    &optval, &optlen);
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get reuseport failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format(
+        "base_socket::get_option(reuseport): {}", platform::errno_strerror()));
   }
 
   *option = (optval != 0);
@@ -397,8 +402,8 @@ void base_socket::get_option(sndbuf & option) const {
 
   if (retval == platform::kErrorRetval || optlen != sizeof(optval))
       [[unlikely]] {
-    throw std::runtime_error(
-        std::format("get sndbuf failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::get_option(sndbuf): {}",
+                                         platform::errno_strerror()));
   }
 
   *option = static_cast<std::uint32_t>(std::max(0, optval));
@@ -416,7 +421,7 @@ auto base_socket::bind(base_sockaddr const & sockaddr) -> bind_status {
     }
 
     throw std::runtime_error(
-        std::format("failed to bind socket: {}", platform::errno_strerror()));
+        std::format("base_socket::bind(): {}", platform::errno_strerror()));
   }
 
   return bind_status::kSuccess;
@@ -440,8 +445,8 @@ auto base_socket::connect(base_sockaddr const & sockaddr) -> connect_status {
       case std::errc::no_such_file_or_directory:
         return connect_status::kRefused;
       [[unlikely]] default:
-        throw std::runtime_error(std::format(
-            "failed to connect base_socket: {}", platform::errno_strerror()));
+        throw std::runtime_error(std::format("base_socket::connect(): {}",
+                                             platform::errno_strerror()));
     }
   }
 
@@ -455,8 +460,8 @@ void base_socket::getsockname(base_sockaddr & sockaddr) const {
       &socklen);
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("getsockname failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::getsockname(): {}",
+                                         platform::errno_strerror()));
   }
 }
 
@@ -467,8 +472,8 @@ void base_socket::getpeername(base_sockaddr & sockaddr) const {
       &socklen);
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("getpeername failed: {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::getpeername(): {}",
+                                         platform::errno_strerror()));
   }
 }
 
@@ -477,7 +482,7 @@ void base_socket::listen(std::size_t backlog) {
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
     throw std::runtime_error(
-        std::format("listen failed: {}", platform::errno_strerror()));
+        std::format("base_socket::listen(): {}", platform::errno_strerror()));
   }
 }
 
@@ -492,7 +497,7 @@ auto base_socket::accept(base_socket & socket) const -> accept_status {
     }
 
     throw std::runtime_error(
-        std::format("accept failed: {}", platform::errno_strerror()));
+        std::format("base_socket::accept(): {}", platform::errno_strerror()));
   }
 
   *socket.native_handle() = handle;
@@ -512,7 +517,7 @@ auto base_socket::send(std::span<std::byte const> bytes) -> std::size_t {
     }
 
     throw std::runtime_error(
-        std::format("send failed: {}", platform::errno_strerror()));
+        std::format("base_socket::send(): {}", platform::errno_strerror()));
   }
 
   return static_cast<std::size_t>(retval);
@@ -534,7 +539,7 @@ auto base_socket::sendto(std::span<std::byte const> bytes,
     }
 
     throw std::runtime_error(
-        std::format("sendto failed: {}", platform::errno_strerror()));
+        std::format("base_socket::sendto(): {}", platform::errno_strerror()));
   }
 
   return static_cast<std::size_t>(retval);
@@ -551,7 +556,7 @@ auto base_socket::recv(std::span<std::byte> bytes) -> std::size_t {
     }
 
     throw std::runtime_error(
-        std::format("recv failed: {}", platform::errno_strerror()));
+        std::format("base_socket::recv(): {}", platform::errno_strerror()));
   }
 
   return static_cast<std::size_t>(retval);
@@ -572,7 +577,7 @@ auto base_socket::recvfrom(std::span<std::byte> bytes, base_sockaddr & sockaddr)
     }
 
     throw std::runtime_error(
-        std::format("recvfrom failed: {}", platform::errno_strerror()));
+        std::format("base_socket::recvfrom(): {}", platform::errno_strerror()));
   }
 
   return static_cast<std::size_t>(retval);

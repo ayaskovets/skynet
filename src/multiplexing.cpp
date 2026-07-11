@@ -47,7 +47,7 @@ class poller::impl final {
 
 poller::poller(callback_t callback) : callback_(std::move(callback)) {
   if (!callback_) [[unlikely]] {
-    throw std::invalid_argument("poller::poller() null callback");
+    throw std::invalid_argument("poller::poller(): null callback");
   }
 }
 
@@ -139,7 +139,7 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
              swiss::bound<int>(milliseconds.count()));
   if (retval == platform::kErrorRetval) [[unlikely]] {
     throw std::runtime_error(
-        std::format("poll() failed: {}", platform::errno_strerror()));
+        std::format("poller::poll_for(): {}", platform::errno_strerror()));
   }
 
   for (std::size_t i = 0;

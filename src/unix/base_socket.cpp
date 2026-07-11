@@ -51,7 +51,8 @@ auto base_socket::unlink_bind(skynet::unix::sockaddr const & sockaddr)
   if (retval == platform::kErrorRetval) {
     if (platform::get_last_error() != std::errc::no_such_file_or_directory) {
       throw std::runtime_error(
-          std::format("unlink failed: {}", platform::errno_strerror()));
+          std::format("base_socket::unlink_bind(): unlink error {}",
+                      platform::errno_strerror()));
     }
   }
   return skynet::base_socket::bind(sockaddr);
@@ -69,7 +70,8 @@ void base_socket::unlink_close() {
     if (retval == platform::kErrorRetval) {
       if (platform::get_last_error() != std::errc::no_such_file_or_directory) {
         throw std::runtime_error(
-            std::format("unlink failed: {}", platform::errno_strerror()));
+            std::format("base_socket::unlink_bind(): unlink error {}",
+                        platform::errno_strerror()));
       }
     }
   }

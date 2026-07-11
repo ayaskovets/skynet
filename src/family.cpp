@@ -26,8 +26,7 @@ auto from_native_family(int native_family) -> family {
     case AF_UNIX:
       return family::kUnix;
     [[unlikely]] default:
-      throw std::invalid_argument(
-          std::format("invalid/unimplemented native family {}", native_family));
+      throw std::invalid_argument("from_native_family(): invalid family");
   }
 }
 

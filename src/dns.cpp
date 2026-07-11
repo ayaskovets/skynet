@@ -34,8 +34,7 @@ constexpr auto to_sockaddr(::addrinfo const & addrinfo)
           inet6::port(network_byte_order_t{}, sockaddr->sin6_port));
     }
     default:
-      throw std::runtime_error(
-          std::format("unexpected address family {}", addrinfo.ai_family));
+      throw std::runtime_error("to_sockaddr(): unsupported family");
   }
 }
 
@@ -45,7 +44,7 @@ auto resolve(std::string_view hostname, family family, socktype socktype)
     -> std::vector<std::variant<inet::sockaddr, inet6::sockaddr>> {
   if (family != family::kUnspec && family != family::kInet &&
       family != family::kInet6) {
-    throw std::invalid_argument(std::format("unsupported family: {}", family));
+    throw std::invalid_argument("resolve(): unsupported family");
   }
 
   std::unique_ptr<::addrinfo, decltype(&::freeaddrinfo)> results_raii(
@@ -67,12 +66,10 @@ auto resolve(std::string_view hostname, family family, socktype socktype)
       break;
     [[unlikely]] case EAI_SYSTEM:
       throw std::runtime_error(
-          std::format("failed to resolve any address at {}: {}", hostname,
-                      platform::errno_strerror()));
+          std::format("resolve(): {}", platform::errno_strerror()));
     default:
       throw std::runtime_error(
-          std::format("failed to resolve any address at {}: {}", hostname,
-                      ::gai_strerror(retval)));
+          std::format("resolve(): {}", ::gai_strerror(retval)));
   }
 
   std::vector<std::variant<inet::sockaddr, inet6::sockaddr>> sockaddrs;
