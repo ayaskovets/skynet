@@ -6,7 +6,7 @@
 namespace skynet::unix {
 
 base_socket::base_socket(uninitialized_t) noexcept
-    : skynet::base_socket(uninitialized_t{}) {}
+    : skynet::base_socket(uninitialized) {}
 
 base_socket::base_socket(skynet::socktype type)
     : skynet::base_socket(skynet::family::kUnix, type,

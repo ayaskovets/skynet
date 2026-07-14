@@ -59,12 +59,12 @@ poller::~poller() noexcept {
   auto const & [polling, pending] = *pimpl_;
 
   for (::pollfd const pollfd : polling) {
-    base_socket sock(uninitialized_t{});
+    base_socket sock(uninitialized);
     *sock.native_handle() = pollfd.fd;
   }
 
   for (::pollfd const pollfd : pending) {
-    base_socket sock(uninitialized_t{});
+    base_socket sock(uninitialized);
     *sock.native_handle() = pollfd.fd;
   }
 }
@@ -151,7 +151,7 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
     /**
      * @note Manually reset socket handle
      */
-    base_socket socket(uninitialized_t{});
+    base_socket socket(uninitialized);
     *socket.native_handle() = polling[i].fd;
 
     callback_result const cb_result =

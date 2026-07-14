@@ -10,7 +10,7 @@ namespace {
 class socket final : public skynet::base_socket {
  public:
   explicit socket(skynet::uninitialized_t)
-      : skynet::base_socket(skynet::uninitialized_t{}) {}
+      : skynet::base_socket(skynet::uninitialized) {}
   socket(skynet::family family, skynet::socktype type,
          skynet::protocol protocol)
       : skynet::base_socket(family, type, protocol) {}

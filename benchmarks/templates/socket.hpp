@@ -31,7 +31,7 @@ constexpr void nonblock_handshake(benchmark::State & state,
 
     while (client.connect(sockaddr) == skynet::connect_status::kRefused) {
     }
-    Socket peer(skynet::uninitialized_t{});
+    Socket peer(skynet::uninitialized);
     while (server.accept(peer) != skynet::accept_status::kSuccess) {
     }
   }
@@ -55,7 +55,7 @@ constexpr void throughput(benchmark::State & state,
     socket.bind(sockaddr);
     socket.listen(1);
 
-    Socket peer(skynet::uninitialized_t{});
+    Socket peer(skynet::uninitialized);
     while (socket.accept(peer) != skynet::accept_status::kSuccess) {
     }
 

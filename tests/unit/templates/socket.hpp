@@ -108,7 +108,7 @@ constexpr void unconnected_accept(Sockaddr const & sockaddr) noexcept
   socket.set_option(skynet::reuseport(true));
   socket.bind(sockaddr);
 
-  Socket peer(skynet::uninitialized_t{});
+  Socket peer(skynet::uninitialized);
   EXPECT_ANY_THROW(socket.accept(peer));
   socket.listen(1);
   EXPECT_EQ(socket.accept(peer), skynet::accept_status::kEmptyQueue);
@@ -213,7 +213,7 @@ constexpr void nonblocking_handshake(Sockaddr const & sockaddr,
   client.set_option(skynet::reuseport(true));
 
   EXPECT_EQ(client.connect(sockaddr), connect_status);
-  Socket peer(skynet::uninitialized_t{});
+  Socket peer(skynet::uninitialized);
   while (server.accept(peer) != skynet::accept_status::kSuccess) {
   }
 

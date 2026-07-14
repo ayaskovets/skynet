@@ -31,7 +31,7 @@ base_socket::base_socket(enum family family, enum socktype socktype,
       }()) {}
 
 base_socket::base_socket(base_socket const & that)
-    : base_socket(uninitialized_t{}) {
+    : base_socket(uninitialized) {
   if (*that.native_handle() == platform::kInvalidNativeHandle) [[unlikely]] {
     return;
   }

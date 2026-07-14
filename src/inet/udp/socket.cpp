@@ -2,8 +2,7 @@
 
 namespace skynet::inet::udp {
 
-socket::socket(uninitialized_t) noexcept
-    : skynet::base_socket(uninitialized_t{}) {}
+socket::socket(uninitialized_t) noexcept : skynet::base_socket(uninitialized) {}
 
 socket::socket()
     : skynet::base_socket(skynet::family::kInet, skynet::socktype::kDgram,
