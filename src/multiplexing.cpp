@@ -39,8 +39,7 @@ constexpr auto from_native_events(std::int16_t native_events) noexcept
 // NOLINTEND(hicpp-signed-bitwise)
 }  // namespace
 
-class poller::impl final {
- public:
+struct poller::impl final {
   std::vector<::pollfd> polling;
   std::vector<::pollfd> pending;
 };
@@ -105,12 +104,6 @@ void poller::insert(base_socket sock, events_t events) {
 void poller::shrink_to_fit() {
   auto & [polling, pending] = *pimpl_;
 
-  if (!pending.empty()) {
-    polling.reserve(polling.size() + pending.size());
-    polling.insert_range(polling.end(), pending);
-    pending.clear();
-  }
-
   polling.shrink_to_fit();
   pending.shrink_to_fit();
 }
@@ -143,13 +136,14 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
   }
 
   for (std::size_t i = 0;
-       i < static_cast<std::size_t>(retval) && i < polling.size();) {
+       i < std::min(static_cast<std::size_t>(retval), polling.size());) {
     if (polling[i].revents == to_native_events({})) {
       continue;
     }
 
     /**
-     * @note Manually reset socket handle
+     * @note Manually reset socket handle to pass a const reference to a socket
+     * object
      */
     base_socket socket(uninitialized);
     *socket.native_handle() = polling[i].fd;
@@ -160,12 +154,17 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
     switch (cb_result) {
       case callback_result::kClose:
         /**
-         * @note Socket gets closed at the end of iteration
+         * @note Socket gets closed at the end of iteration in base_socket
+         * destructor
          */
         polling.erase(
             std::next(polling.begin(), static_cast<std::ptrdiff_t>(i)));
         break;
       case callback_result::kDoNothing:
+        /**
+         * @note Manually set the handle back to invalid so base_socket
+         * destructor is a noop
+         */
         *socket.native_handle() = platform::kInvalidNativeHandle;
         break;
     }

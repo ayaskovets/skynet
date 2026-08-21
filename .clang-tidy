@@ -16,6 +16,7 @@ Checks: "*,
         -hicpp-noexcept-move,
         -performance-noexcept-move-constructor,
         -android-cloexec-accept,
-        -readability-function-cognitive-complexity"
+        -readability-function-cognitive-complexity,
+        -altera-struct-pack-align"
 FormatStyle: none
 WarningsAsErrors: "*"

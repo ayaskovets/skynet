@@ -4,7 +4,6 @@
 #include <span>
 
 #include "family.hpp"
-#include "options.hpp"
 #include "sockaddr.hpp"
 #include "socktype.hpp"
 #include "status.hpp"
@@ -24,47 +23,6 @@ concept socket = requires(T socket, Sockaddr sockaddr) {
   { socket.getpeername(sockaddr) };
 
   { socket.close() };
-
-  requires requires(broadcast option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(keepalive option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(linger option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(nodelay option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(nonblock option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(oobinline option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(rcvbuf option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(reuseaddr option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(reuseport option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
-  requires requires(sndbuf option) {
-    { socket.set_option(option) } -> std::same_as<void>;
-    { socket.get_option(option) } -> std::same_as<void>;
-  };
 
   requires skynet::concepts::sockaddr<Sockaddr>;
   requires std::constructible_from<T, uninitialized_t>;

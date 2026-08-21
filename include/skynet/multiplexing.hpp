@@ -60,6 +60,9 @@ class poller final : public swiss::non_copyable {
   void insert(base_socket sock, events_t events);
 
  public:
+  /**
+   * @brief Non-binding request to shrink the underlying buffers
+   */
   void shrink_to_fit();
 
  public:
@@ -71,7 +74,7 @@ class poller final : public swiss::non_copyable {
   void poll();
 
  private:
-  class impl;
+  struct impl;
   swiss::static_pimpl<impl, 48, 8> pimpl_;
   callback_t callback_;
 };
