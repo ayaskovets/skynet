@@ -44,15 +44,21 @@ struct poller::impl final {
   std::vector<::pollfd> pending;
 };
 
-poller::poller(callback_t callback) : callback_(std::move(callback)) {
+poller::poller(callback_t const & callback) : callback_(callback) {
   if (!callback_) [[unlikely]] {
     throw std::invalid_argument("poller::poller(): null callback");
   }
 }
 
-poller::poller(poller &&) noexcept = default;
+// NOLINTNEXTLINE(bugprone-exception-escape)
+poller::poller(poller && that) noexcept
+    : pimpl_(std::move(that.pimpl_)), callback_(that.callback_) {}
 
-auto poller::operator=(poller &&) noexcept -> poller & = default;
+auto poller::operator=(poller && that) noexcept -> poller & {
+  pimpl_    = std::move(that.pimpl_);
+  callback_ = that.callback_;
+  return *this;
+}
 
 poller::~poller() noexcept {
   auto const & [polling, pending] = *pimpl_;

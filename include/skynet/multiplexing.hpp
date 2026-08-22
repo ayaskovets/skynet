@@ -35,7 +35,7 @@ class poller final : public swiss::non_copyable {
       swiss::noexcept_function<callback_result, base_socket const &, events_t>;
 
  public:
-  explicit poller(callback_t callback);
+  explicit poller(callback_t const & callback);
   poller(poller &&) noexcept;
   auto operator=(poller &&) noexcept -> poller &;
   ~poller() noexcept;

@@ -16,7 +16,7 @@
 namespace skynet {
 
 /**
- * @brief Socket base class. Non-constructible by itself
+ * @brief Socket base class. Constructible only by derived types
  */
 class base_socket {
   /**
