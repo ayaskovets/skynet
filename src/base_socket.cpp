@@ -93,12 +93,6 @@ base_socket::~base_socket() noexcept {
   std::ignore = platform::close_native_handle(*native_handle());
 }
 
-auto base_socket::native_handle() const noexcept -> impl const & {
-  return *pimpl_;
-}
-
-auto base_socket::native_handle() noexcept -> impl & { return *pimpl_; }
-
 void base_socket::close() {
   if (*native_handle() == platform::kInvalidNativeHandle) [[unlikely]] {
     throw std::runtime_error("base_socket::close(): double close");
@@ -152,6 +146,80 @@ auto base_socket::socktype() const -> skynet::socktype {
 
   return from_native_socktype(optval);
 }
+
+auto base_socket::bind(base_sockaddr const & sockaddr) -> bind_status {
+  auto const retval =
+      ::bind(*native_handle(),
+             static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
+             static_cast<platform::socklen_t>(sockaddr.length()));
+
+  if (retval == platform::kErrorRetval) [[unlikely]] {
+    if (platform::get_last_error() == std::errc::address_in_use) {
+      return bind_status::kInUse;
+    }
+
+    throw std::runtime_error(
+        std::format("base_socket::bind(): {}", platform::errno_strerror()));
+  }
+
+  return bind_status::kSuccess;
+}
+
+auto base_socket::connect(base_sockaddr const & sockaddr) -> connect_status {
+  auto const retval =
+      ::connect(*native_handle(),
+                static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
+                static_cast<platform::socklen_t>(sockaddr.length()));
+
+  if (retval == platform::kErrorRetval) {
+    switch (platform::get_last_error()) {
+      case std::errc::already_connected:
+        break;
+      case std::errc::operation_in_progress:
+      case std::errc::resource_unavailable_try_again:
+      case std::errc::connection_already_in_progress:
+        return connect_status::kPending;
+      case std::errc::connection_refused:
+      case std::errc::no_such_file_or_directory:
+        return connect_status::kRefused;
+      [[unlikely]] default:
+        throw std::runtime_error(std::format("base_socket::connect(): {}",
+                                             platform::errno_strerror()));
+    }
+  }
+
+  return connect_status::kSuccess;
+}
+
+void base_socket::getsockname(base_sockaddr & sockaddr) const {
+  auto socklen      = static_cast<platform::socklen_t>(sockaddr.length());
+  auto const retval = ::getsockname(
+      *native_handle(), static_cast<::sockaddr *>(sockaddr.native_sockaddr()),
+      &socklen);
+
+  if (retval == platform::kErrorRetval) [[unlikely]] {
+    throw std::runtime_error(std::format("base_socket::getsockname(): {}",
+                                         platform::errno_strerror()));
+  }
+}
+
+void base_socket::getpeername(base_sockaddr & sockaddr) const {
+  auto socklen      = static_cast<platform::socklen_t>(sockaddr.length());
+  auto const retval = ::getpeername(
+      *native_handle(), static_cast<::sockaddr *>(sockaddr.native_sockaddr()),
+      &socklen);
+
+  if (retval == platform::kErrorRetval) [[unlikely]] {
+    throw std::runtime_error(std::format("base_socket::getpeername(): {}",
+                                         platform::errno_strerror()));
+  }
+}
+
+auto base_socket::native_handle() const noexcept -> impl const & {
+  return *pimpl_;
+}
+
+auto base_socket::native_handle() noexcept -> impl & { return *pimpl_; }
 
 void base_socket::set_option(broadcast option) {
   int const optval  = (*option ? 1 : 0);
@@ -407,74 +475,6 @@ void base_socket::get_option(sndbuf & option) const {
   }
 
   *option = static_cast<std::uint32_t>(std::max(0, optval));
-}
-
-auto base_socket::bind(base_sockaddr const & sockaddr) -> bind_status {
-  auto const retval =
-      ::bind(*native_handle(),
-             static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
-             static_cast<platform::socklen_t>(sockaddr.length()));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    if (platform::get_last_error() == std::errc::address_in_use) {
-      return bind_status::kInUse;
-    }
-
-    throw std::runtime_error(
-        std::format("base_socket::bind(): {}", platform::errno_strerror()));
-  }
-
-  return bind_status::kSuccess;
-}
-
-auto base_socket::connect(base_sockaddr const & sockaddr) -> connect_status {
-  auto const retval =
-      ::connect(*native_handle(),
-                static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
-                static_cast<platform::socklen_t>(sockaddr.length()));
-
-  if (retval == platform::kErrorRetval) {
-    switch (platform::get_last_error()) {
-      case std::errc::already_connected:
-        break;
-      case std::errc::operation_in_progress:
-      case std::errc::resource_unavailable_try_again:
-      case std::errc::connection_already_in_progress:
-        return connect_status::kPending;
-      case std::errc::connection_refused:
-      case std::errc::no_such_file_or_directory:
-        return connect_status::kRefused;
-      [[unlikely]] default:
-        throw std::runtime_error(std::format("base_socket::connect(): {}",
-                                             platform::errno_strerror()));
-    }
-  }
-
-  return connect_status::kSuccess;
-}
-
-void base_socket::getsockname(base_sockaddr & sockaddr) const {
-  auto socklen      = static_cast<platform::socklen_t>(sockaddr.length());
-  auto const retval = ::getsockname(
-      *native_handle(), static_cast<::sockaddr *>(sockaddr.native_sockaddr()),
-      &socklen);
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::getsockname(): {}",
-                                         platform::errno_strerror()));
-  }
-}
-
-void base_socket::getpeername(base_sockaddr & sockaddr) const {
-  auto socklen      = static_cast<platform::socklen_t>(sockaddr.length());
-  auto const retval = ::getpeername(
-      *native_handle(), static_cast<::sockaddr *>(sockaddr.native_sockaddr()),
-      &socklen);
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::getpeername(): {}",
-                                         platform::errno_strerror()));
-  }
 }
 
 void base_socket::listen(std::size_t backlog) {

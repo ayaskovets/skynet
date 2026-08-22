@@ -35,11 +35,6 @@ class base_socket {
   auto operator=(base_socket && that) noexcept -> base_socket &;
   ~base_socket() noexcept;
 
- protected:
-  class impl;
-  [[nodiscard]] auto native_handle() const noexcept -> impl const &;
-  [[nodiscard]] auto native_handle() noexcept -> impl &;
-
  public:
   /**
    * @brief Manually close a socket
@@ -68,6 +63,19 @@ class base_socket {
   [[nodiscard]] auto family() const -> family;
   [[nodiscard]] auto socktype() const -> socktype;
 
+ public:
+  auto bind(base_sockaddr const & sockaddr) -> bind_status;
+  auto connect(base_sockaddr const & sockaddr) -> connect_status;
+
+ public:
+  void getsockname(base_sockaddr & sockaddr) const;
+  void getpeername(base_sockaddr & sockaddr) const;
+
+ protected:
+  class impl;
+  [[nodiscard]] auto native_handle() const noexcept -> impl const &;
+  [[nodiscard]] auto native_handle() noexcept -> impl &;
+
  protected:
   void set_option(broadcast option);
   void set_option(keepalive option);
@@ -91,14 +99,6 @@ class base_socket {
   void get_option(reuseport & option) const;
   void get_option(sndbuf & option) const;
   void get_option(nodelay & option) const;
-
- public:
-  auto bind(base_sockaddr const & sockaddr) -> bind_status;
-  auto connect(base_sockaddr const & sockaddr) -> connect_status;
-
- public:
-  void getsockname(base_sockaddr & sockaddr) const;
-  void getpeername(base_sockaddr & sockaddr) const;
 
  protected:
   void listen(std::size_t backlog);

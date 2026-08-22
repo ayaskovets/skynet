@@ -54,7 +54,7 @@ class poller final : public swiss::non_copyable {
  public:
   /**
    * @brief Poll for selected events for the socket
-   * @note Safe to call from the callback
+   * @note Safe to call from the callback. Not thread-safe
    * @return True if the socket was inserted
    */
   void insert(base_socket sock, events_t events);
