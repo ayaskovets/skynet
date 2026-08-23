@@ -27,7 +27,6 @@ class ip final {
 
  public:
   constexpr auto operator==(ip const &) const noexcept -> bool = default;
-  constexpr auto operator!=(ip const &) const noexcept -> bool = default;
 
  public:
   [[nodiscard]] auto to_bytes(network_byte_order_t) const noexcept

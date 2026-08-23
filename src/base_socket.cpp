@@ -1,14 +1,44 @@
 #include <skynet/base_socket.hpp>
-#include <skynet/options.hpp>
+#include <skynet/option.hpp>
 
 #include <chrono>
 
+#include <swiss/math.hpp>
 #include <swiss/strong_typedef.hpp>
 
 #include "base_socket_impl.hpp"
 #include "platform/platform.hpp"  // IWYU pragma: keep
 
 namespace skynet {
+
+namespace {
+
+template <typename Optval>
+constexpr void setsockopt(platform::native_handle_t handle, int level,
+                          int optname, Optval optval) {
+  auto const retval =
+      ::setsockopt(handle, level, optname, &optval, sizeof(Optval));
+
+  if (retval == platform::kErrorRetval) [[unlikely]] {
+    throw std::runtime_error(std::format("base_socket::set_option(): {}",
+                                         platform::errno_strerror()));
+  }
+}
+
+template <typename Optval>
+constexpr void getsockopt(platform::native_handle_t handle, int level,
+                          int optname, Optval & optval) {
+  platform::socklen_t optlen = sizeof(optval);
+  auto const retval = ::getsockopt(handle, level, optname, &optval, &optlen);
+
+  if (retval == platform::kErrorRetval || optlen != sizeof(Optval))
+      [[unlikely]] {
+    throw std::runtime_error(std::format("base_socket::get_option(): {} ",
+                                         platform::errno_strerror()));
+  }
+}
+
+}  // namespace
 
 base_socket::base_socket(uninitialized_t) noexcept
     : pimpl_(impl(platform::kInvalidNativeHandle)) {}
@@ -110,10 +140,6 @@ auto base_socket::operator==(base_socket const & that) const noexcept -> bool {
   return native_handle() == that.native_handle();
 }
 
-auto base_socket::operator!=(base_socket const & that) const noexcept -> bool {
-  return !operator==(that);
-}
-
 auto base_socket::family() const -> skynet::family {
   ::sockaddr_storage storage{};
   platform::socklen_t socklen = sizeof(storage);
@@ -151,7 +177,7 @@ auto base_socket::bind(base_sockaddr const & sockaddr) -> bind_status {
   auto const retval =
       ::bind(*native_handle(),
              static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
-             static_cast<platform::socklen_t>(sockaddr.length()));
+             static_cast<platform::socklen_t>(sockaddr.socklen()));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
     if (platform::get_last_error() == std::errc::address_in_use) {
@@ -169,7 +195,7 @@ auto base_socket::connect(base_sockaddr const & sockaddr) -> connect_status {
   auto const retval =
       ::connect(*native_handle(),
                 static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
-                static_cast<platform::socklen_t>(sockaddr.length()));
+                static_cast<platform::socklen_t>(sockaddr.socklen()));
 
   if (retval == platform::kErrorRetval) {
     switch (platform::get_last_error()) {
@@ -192,7 +218,7 @@ auto base_socket::connect(base_sockaddr const & sockaddr) -> connect_status {
 }
 
 void base_socket::getsockname(base_sockaddr & sockaddr) const {
-  auto socklen      = static_cast<platform::socklen_t>(sockaddr.length());
+  auto socklen      = static_cast<platform::socklen_t>(sockaddr.socklen());
   auto const retval = ::getsockname(
       *native_handle(), static_cast<::sockaddr *>(sockaddr.native_sockaddr()),
       &socklen);
@@ -204,7 +230,7 @@ void base_socket::getsockname(base_sockaddr & sockaddr) const {
 }
 
 void base_socket::getpeername(base_sockaddr & sockaddr) const {
-  auto socklen      = static_cast<platform::socklen_t>(sockaddr.length());
+  auto socklen      = static_cast<platform::socklen_t>(sockaddr.socklen());
   auto const retval = ::getpeername(
       *native_handle(), static_cast<::sockaddr *>(sockaddr.native_sockaddr()),
       &socklen);
@@ -221,118 +247,74 @@ auto base_socket::native_handle() const noexcept -> impl const & {
 
 auto base_socket::native_handle() noexcept -> impl & { return *pimpl_; }
 
-void base_socket::set_option(broadcast option) {
-  int const optval  = (*option ? 1 : 0);
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_BROADCAST,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::set_option(broadcast): {}", platform::errno_strerror()));
-  }
+template <>
+void base_socket::set_option(options::broadcast option) {
+  int const optval = (*option ? 1 : 0);
+  setsockopt(*native_handle(), SOL_SOCKET, SO_BROADCAST, optval);
 }
 
-void base_socket::set_option(keepalive option) {
-  int const optval  = (*option ? 1 : 0);
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_KEEPALIVE,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::set_option(keepalive): {}", platform::errno_strerror()));
-  }
+template <>
+void base_socket::set_option(options::keepalive option) {
+  int const optval = (*option ? 1 : 0);
+  setsockopt(*native_handle(), SOL_SOCKET, SO_KEEPALIVE, optval);
 }
 
-void base_socket::set_option(linger option) {
+template <>
+void base_socket::set_option(options::linger option) {
   ::linger const optval{.l_onoff  = (option->has_value() ? 1 : 0),
                         .l_linger = static_cast<int>(
                             option->value_or(std::chrono::seconds{}).count())};
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_LINGER_SEC,
-                                   &optval, sizeof(optval));
+  setsockopt(*native_handle(), SOL_SOCKET, SO_LINGER_SEC, optval);
+}
 
+template <>
+void base_socket::set_option(options::nodelay option) {
+  int const optval = (*option ? 1 : 0);
+  setsockopt(*native_handle(), IPPROTO_TCP, TCP_NODELAY, optval);
+}
+
+template <>
+void base_socket::set_option(options::nonblock option) {
+  int const optval  = *option ? 1 : 0;
+  auto const retval = platform::set_nonblock(*native_handle(), optval);
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::set_option(linger): {}",
+    throw std::runtime_error(std::format("base_socket::set_option(): {}",
                                          platform::errno_strerror()));
   }
 }
 
-void base_socket::set_option(nodelay option) {
-  int const optval  = (*option ? 1 : 0);
-  auto const retval = ::setsockopt(*native_handle(), IPPROTO_TCP, TCP_NODELAY,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::set_option(nodelay): {}",
-                                         platform::errno_strerror()));
-  }
+template <>
+void base_socket::set_option(options::oobinline option) {
+  int const optval = (*option ? 1 : 0);
+  setsockopt(*native_handle(), SOL_SOCKET, SO_OOBINLINE, optval);
 }
 
-void base_socket::set_option(nonblock option) {
-  auto const retval = platform::set_nonblock(*native_handle(), *option ? 1 : 0);
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::set_option(nonblock): {}", platform::errno_strerror()));
-  }
+template <>
+void base_socket::set_option(options::rcvbuf option) {
+  int const optval = swiss::bound<int>(*option);
+  setsockopt(*native_handle(), SOL_SOCKET, SO_RCVBUF, optval);
 }
 
-void base_socket::set_option(oobinline option) {
-  int const optval  = (*option ? 1 : 0);
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_OOBINLINE,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::set_option(oobinline): {}", platform::errno_strerror()));
-  }
+template <>
+void base_socket::set_option(options::reuseaddr option) {
+  int const optval = (*option ? 1 : 0);
+  setsockopt(*native_handle(), SOL_SOCKET, SO_REUSEADDR, optval);
 }
 
-void base_socket::set_option(rcvbuf option) {
-  int const optval  = static_cast<int>(std::min(
-      *option, static_cast<std::uint32_t>(std::numeric_limits<int>::max())));
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_RCVBUF,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::set_option(rcvbuf): {}",
-                                         platform::errno_strerror()));
-  }
+template <>
+void base_socket::set_option(options::reuseport option) {
+  int const optval = (*option ? 1 : 0);
+  setsockopt(*native_handle(), SOL_SOCKET, SO_REUSEPORT, optval);
 }
 
-void base_socket::set_option(reuseaddr option) {
-  int const optval  = (*option ? 1 : 0);
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_REUSEADDR,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::set_option(reuseaddr): {}", platform::errno_strerror()));
-  }
+template <>
+void base_socket::set_option(options::sndbuf option) {
+  int const optval = swiss::bound<int>(*option);
+  setsockopt(*native_handle(), SOL_SOCKET, SO_SNDBUF, optval);
 }
 
-void base_socket::set_option(reuseport option) {
-  int const optval  = (*option ? 1 : 0);
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_REUSEPORT,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::set_option(reuseport): {}", platform::errno_strerror()));
-  }
-}
-
-void base_socket::set_option(sndbuf option) {
-  int const optval  = static_cast<int>(std::min(
-      *option, static_cast<std::uint32_t>(std::numeric_limits<int>::max())));
-  auto const retval = ::setsockopt(*native_handle(), SOL_SOCKET, SO_SNDBUF,
-                                   &optval, sizeof(optval));
-
-  if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::set_option(sndbuf): {}",
-                                         platform::errno_strerror()));
-  }
-}
-
-void base_socket::get_option(broadcast & option) const {
+template <>
+void base_socket::get_option(options::broadcast & option) const {
   int optval{};
   platform::socklen_t optlen = sizeof(optval);
   auto const retval = ::getsockopt(*native_handle(), SOL_SOCKET, SO_BROADCAST,
@@ -347,133 +329,70 @@ void base_socket::get_option(broadcast & option) const {
   *option = (optval != 0);
 }
 
-void base_socket::get_option(keepalive & option) const {
+template <>
+void base_socket::get_option(options::keepalive & option) const {
   int optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval = ::getsockopt(*native_handle(), SOL_SOCKET, SO_KEEPALIVE,
-                                   &optval, &optlen);
-
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::get_option(keepalive): {}", platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), SOL_SOCKET, SO_KEEPALIVE, optval);
   *option = (optval != 0);
 }
 
-void base_socket::get_option(linger & option) const {
+template <>
+void base_socket::get_option(options::linger & option) const {
   ::linger optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval = ::getsockopt(*native_handle(), SOL_SOCKET, SO_LINGER_SEC,
-                                   &optval, &optlen);
-
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::get_option(linger): {}",
-                                         platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), SOL_SOCKET, SO_LINGER_SEC, optval);
   *option = (optval.l_onoff == 0 ? std::optional<std::chrono::seconds>()
                                  : std::chrono::seconds(optval.l_linger));
 }
 
-void base_socket::get_option(nodelay & option) const {
+template <>
+void base_socket::get_option(options::nodelay & option) const {
   int optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval = ::getsockopt(*native_handle(), IPPROTO_TCP, TCP_NODELAY,
-                                   &optval, &optlen);
-
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::get_option(nodelay): {}",
-                                         platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), IPPROTO_TCP, TCP_NODELAY, optval);
   *option = (optval != 0);
 }
 
-void base_socket::get_option(nonblock & option) const {
+template <>
+void base_socket::get_option(options::nonblock & option) const {
   auto const retval = platform::get_nonblock(*native_handle());
   if (retval == platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::get_option(nonblock): {}", platform::errno_strerror()));
+    throw std::runtime_error(std::format("base_socket::get_option(): {}",
+                                         platform::errno_strerror()));
   }
-
   *option = (retval != 0);
 }
 
-void base_socket::get_option(oobinline & option) const {
+template <>
+void base_socket::get_option(options::oobinline & option) const {
   int optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval = ::getsockopt(*native_handle(), SOL_SOCKET, SO_OOBINLINE,
-                                   &optval, &optlen);
-
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::get_option(oobinline): {}", platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), SOL_SOCKET, SO_OOBINLINE, optval);
   *option = (optval != 0);
 }
 
-void base_socket::get_option(rcvbuf & option) const {
+template <>
+void base_socket::get_option(options::rcvbuf & option) const {
   int optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval =
-      ::getsockopt(*native_handle(), SOL_SOCKET, SO_RCVBUF, &optval, &optlen);
-
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::get_option(rcvbuf): {}",
-                                         platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), SOL_SOCKET, SO_RCVBUF, optval);
   *option = static_cast<std::uint32_t>(std::max(0, optval));
 }
 
-void base_socket::get_option(reuseaddr & option) const {
+template <>
+void base_socket::get_option(options::reuseaddr & option) const {
   int optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval = ::getsockopt(*native_handle(), SOL_SOCKET, SO_REUSEADDR,
-                                   &optval, &optlen);
-
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::get_option(reuseaddr): {}", platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), SOL_SOCKET, SO_REUSEADDR, optval);
   *option = (optval != 0);
 }
 
-void base_socket::get_option(reuseport & option) const {
+template <>
+void base_socket::get_option(options::reuseport & option) const {
   int optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval = ::getsockopt(*native_handle(), SOL_SOCKET, SO_REUSEPORT,
-                                   &optval, &optlen);
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format(
-        "base_socket::get_option(reuseport): {}", platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), SOL_SOCKET, SO_REUSEPORT, optval);
   *option = (optval != 0);
 }
 
-void base_socket::get_option(sndbuf & option) const {
+template <>
+void base_socket::get_option(options::sndbuf & option) const {
   int optval{};
-  platform::socklen_t optlen = sizeof(optval);
-  auto const retval =
-      ::getsockopt(*native_handle(), SOL_SOCKET, SO_SNDBUF, &optval, &optlen);
-
-  if (retval == platform::kErrorRetval || optlen != sizeof(optval))
-      [[unlikely]] {
-    throw std::runtime_error(std::format("base_socket::get_option(sndbuf): {}",
-                                         platform::errno_strerror()));
-  }
-
+  getsockopt(*native_handle(), SOL_SOCKET, SO_SNDBUF, optval);
   *option = static_cast<std::uint32_t>(std::max(0, optval));
 }
 
@@ -528,7 +447,7 @@ auto base_socket::sendto(std::span<std::byte const> bytes,
   auto const retval =
       ::sendto(*native_handle(), bytes.data(), bytes.size(), 0,
                static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
-               static_cast<platform::socklen_t>(sockaddr.length()));
+               static_cast<platform::socklen_t>(sockaddr.socklen()));
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
     std::errc const error = platform::get_last_error();
@@ -564,7 +483,7 @@ auto base_socket::recv(std::span<std::byte> bytes) -> std::size_t {
 
 auto base_socket::recvfrom(std::span<std::byte> bytes, base_sockaddr & sockaddr)
     -> std::size_t {
-  auto socklen      = static_cast<platform::socklen_t>(sockaddr.length());
+  auto socklen      = static_cast<platform::socklen_t>(sockaddr.socklen());
   auto const retval = ::recvfrom(
       *native_handle(), bytes.data(), bytes.size(), 0,
       static_cast<::sockaddr *>(sockaddr.native_sockaddr()), &socklen);

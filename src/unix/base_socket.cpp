@@ -33,7 +33,7 @@ auto base_socket::bind(skynet::unix::sockaddr const & sockaddr)
     -> skynet::bind_status {
   switch (skynet::base_socket::bind(sockaddr)) {
     case skynet::bind_status::kInUse: {
-      reuseaddr option{};
+      options::reuseaddr option{};
       get_option(option);
       if (*option) {
         return unlink_bind(sockaddr);
@@ -55,6 +55,7 @@ auto base_socket::unlink_bind(skynet::unix::sockaddr const & sockaddr)
                       platform::errno_strerror()));
     }
   }
+
   return skynet::base_socket::bind(sockaddr);
 }
 

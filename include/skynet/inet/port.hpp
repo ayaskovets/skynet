@@ -17,7 +17,6 @@ class port final {
 
  public:
   constexpr auto operator==(port const &) const noexcept -> bool = default;
-  constexpr auto operator!=(port const &) const noexcept -> bool = default;
 
  public:
   [[nodiscard]] auto to_bytes() const noexcept -> std::uint16_t;

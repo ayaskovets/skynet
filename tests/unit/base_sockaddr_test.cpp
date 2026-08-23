@@ -27,7 +27,7 @@ TEST_P(base_sockaddr, smoke) {
   auto const & family = GetParam();
   sockaddr const sockaddr(family);
 
-  EXPECT_GT(sockaddr.length(), 0);
+  EXPECT_GT(sockaddr.socklen(), 0);
   EXPECT_EQ(sockaddr.family(), family);
   EXPECT_TRUE(sockaddr.native_sockaddr());
   EXPECT_NO_THROW(std::ignore = sockaddr.to_string());
@@ -40,7 +40,7 @@ TEST_P(base_sockaddr, copy) {
   sockaddr const copy(original);
 
   EXPECT_EQ(original.family(), copy.family());
-  EXPECT_EQ(original.length(), copy.length());
+  EXPECT_EQ(original.socklen(), copy.socklen());
   EXPECT_NE(original.native_sockaddr(), copy.native_sockaddr());
   EXPECT_EQ(original, copy);
 }
@@ -50,7 +50,7 @@ TEST_P(base_sockaddr, move) {
   sockaddr original(family);
   sockaddr const move(std::move(original));
 
-  EXPECT_GT(move.length(), 0);
+  EXPECT_GT(move.socklen(), 0);
   EXPECT_EQ(move.family(), family);
   EXPECT_TRUE(move.native_sockaddr());
   EXPECT_NO_THROW(std::ignore = move.to_string());

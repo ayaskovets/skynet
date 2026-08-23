@@ -17,7 +17,7 @@ TEST(unix_dgram_socket, dgram_unconnected_send_receive) {
   std::vector<std::byte> const data{std::byte(1), std::byte(2), std::byte(3)};
 
   skynet::unix::dgram::socket socket;
-  socket.set_option(skynet::nonblock(true));
+  socket.set_option(skynet::options::nonblock(true));
 
   EXPECT_ANY_THROW(socket.send(data));
   std::vector<std::byte> buffer(data.size());
@@ -60,7 +60,7 @@ TEST(unix_dgram_socket, unlink) {
 
   skynet::unix::dgram::socket reuseaddr_socket;
   EXPECT_EQ(reuseaddr_socket.bind(sockaddr), skynet::bind_status::kInUse);
-  reuseaddr_socket.set_option(skynet::reuseaddr(true));
+  reuseaddr_socket.set_option(skynet::options::reuseaddr(true));
   EXPECT_EQ(reuseaddr_socket.bind(sockaddr), skynet::bind_status::kSuccess);
 }
 

@@ -53,7 +53,7 @@ TEST(unix_stream_socket, unlink) {
 
   skynet::unix::stream::socket reuseaddr_socket;
   EXPECT_EQ(reuseaddr_socket.bind(sockaddr), skynet::bind_status::kInUse);
-  reuseaddr_socket.set_option(skynet::reuseaddr(true));
+  reuseaddr_socket.set_option(skynet::options::reuseaddr(true));
   EXPECT_EQ(reuseaddr_socket.bind(sockaddr), skynet::bind_status::kSuccess);
 }
 

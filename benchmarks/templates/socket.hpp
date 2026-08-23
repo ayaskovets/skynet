@@ -18,16 +18,16 @@ constexpr void nonblock_handshake(benchmark::State & state,
   // NOLINTNEXTLINE(readability-identifier-length)
   for (auto const _ : state) {
     Socket server;
-    server.set_option(skynet::nonblock(true));
-    server.set_option(skynet::reuseaddr(true));
-    server.set_option(skynet::reuseport(true));
+    server.set_option(skynet::options::nonblock(true));
+    server.set_option(skynet::options::reuseaddr(true));
+    server.set_option(skynet::options::reuseport(true));
     server.bind(sockaddr);
     server.listen(1);
 
     Socket client;
-    client.set_option(skynet::nonblock(true));
-    client.set_option(skynet::reuseaddr(true));
-    client.set_option(skynet::reuseport(true));
+    client.set_option(skynet::options::nonblock(true));
+    client.set_option(skynet::options::reuseaddr(true));
+    client.set_option(skynet::options::reuseport(true));
 
     while (client.connect(sockaddr) == skynet::connect_status::kRefused) {
     }
@@ -46,9 +46,9 @@ constexpr void throughput(benchmark::State & state,
   auto const buffer_size = static_cast<std::size_t>(state.range(1));
 
   Socket socket;
-  socket.set_option(skynet::nonblock(true));
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::nonblock(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
 
   std::vector<std::byte> buffer(buffer_size);
   if (state.thread_index() == 0) {
@@ -91,9 +91,9 @@ constexpr void throughput(benchmark::State & state,
   auto const buffer_size = static_cast<std::size_t>(state.range(1));
 
   Socket socket;
-  socket.set_option(skynet::nonblock(true));
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::nonblock(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
 
   std::vector<std::byte> buffer(buffer_size);
   if (state.thread_index() == 0) {

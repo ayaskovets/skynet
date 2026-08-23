@@ -1,5 +1,5 @@
 #include <skynet/base_socket.hpp>
-#include <skynet/options.hpp>
+#include <skynet/option.hpp>
 
 #include <gtest/gtest.h>
 
@@ -99,7 +99,7 @@ TEST_P(base_socket, options) try {
   EXPECT_EQ(socket.socktype(), type);
 
   {
-    skynet::broadcast option{};
+    skynet::options::broadcast option{};
     socket.get_option(option);
     EXPECT_EQ(*option, false);
     *option = true;
@@ -109,7 +109,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::keepalive option{};
+    skynet::options::keepalive option{};
     socket.get_option(option);
     EXPECT_EQ(*option, false);
     *option = true;
@@ -119,7 +119,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::linger option{std::chrono::seconds(0)};
+    skynet::options::linger option{std::chrono::seconds(0)};
     socket.get_option(option);
     EXPECT_NE(*option, std::chrono::seconds(0));
     *option = std::chrono::seconds(5);
@@ -129,7 +129,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::nonblock option{};
+    skynet::options::nonblock option{};
     socket.get_option(option);
     EXPECT_EQ(*option, false);
     *option = true;
@@ -139,7 +139,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::oobinline option{};
+    skynet::options::oobinline option{};
     socket.get_option(option);
     EXPECT_EQ(*option, false);
     *option = true;
@@ -149,7 +149,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::rcvbuf option{0};
+    skynet::options::rcvbuf option{0};
     socket.get_option(option);
     EXPECT_NE(*option, 0);
     *option = 1024;
@@ -159,7 +159,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::reuseaddr option{};
+    skynet::options::reuseaddr option{};
     socket.get_option(option);
     EXPECT_EQ(*option, false);
     *option = true;
@@ -169,7 +169,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::reuseport option{};
+    skynet::options::reuseport option{};
     socket.get_option(option);
     EXPECT_EQ(*option, false);
     *option = true;
@@ -179,7 +179,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::sndbuf option{0};
+    skynet::options::sndbuf option{0};
     socket.get_option(option);
     EXPECT_NE(*option, 0);
     *option = 1024;
@@ -189,7 +189,7 @@ TEST_P(base_socket, options) try {
   }
 
   {
-    skynet::nodelay option{};
+    skynet::options::nodelay option{};
     socket.get_option(option);
     EXPECT_EQ(*option, false);
     *option = true;

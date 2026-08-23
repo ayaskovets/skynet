@@ -63,11 +63,13 @@ auto poller::operator=(poller && that) noexcept -> poller & {
 poller::~poller() noexcept {
   auto const & [polling, pending] = *pimpl_;
 
+  /**
+   * @note All socket handles get freed via temporary socket objects
+   */
   for (::pollfd const pollfd : polling) {
     base_socket sock(uninitialized);
     *sock.native_handle() = pollfd.fd;
   }
-
   for (::pollfd const pollfd : pending) {
     base_socket sock(uninitialized);
     *sock.native_handle() = pollfd.fd;
@@ -84,6 +86,13 @@ auto poller::size() const noexcept -> std::size_t {
   auto const & [polling, pending] = *pimpl_;
 
   return polling.size() + pending.size();
+}
+
+void poller::shrink_to_fit() {
+  auto & [polling, pending] = *pimpl_;
+
+  polling.shrink_to_fit();
+  pending.shrink_to_fit();
 }
 
 void poller::insert(base_socket sock, events_t events) {
@@ -105,13 +114,6 @@ void poller::insert(base_socket sock, events_t events) {
    * @note Manually reset socket handle so it does not get closed
    */
   *sock.native_handle() = platform::kInvalidNativeHandle;
-}
-
-void poller::shrink_to_fit() {
-  auto & [polling, pending] = *pimpl_;
-
-  polling.shrink_to_fit();
-  pending.shrink_to_fit();
 }
 
 void poller::try_poll() {
@@ -141,8 +143,7 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
         std::format("poller::poll_for(): {}", platform::errno_strerror()));
   }
 
-  for (std::size_t i = 0;
-       i < std::min(static_cast<std::size_t>(retval), polling.size());) {
+  for (std::size_t i = 0; i < static_cast<std::size_t>(retval); ++i) {
     if (polling[i].revents == to_native_events({})) {
       continue;
     }
@@ -174,8 +175,6 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
         *socket.native_handle() = platform::kInvalidNativeHandle;
         break;
     }
-
-    i -= 1;
   }
 }
 

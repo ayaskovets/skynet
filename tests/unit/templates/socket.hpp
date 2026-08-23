@@ -16,8 +16,8 @@ constexpr void unconnected_send_receive(Sockaddr const &) noexcept
   std::vector<std::byte> const data{std::byte(1), std::byte(2), std::byte(3)};
 
   Socket socket;
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
 
   EXPECT_ANY_THROW(socket.send(data));
   std::vector<std::byte> buffer(data.size());
@@ -31,9 +31,9 @@ constexpr void unconnected_send_receive(Sockaddr const & sockaddr) noexcept
   std::vector<std::byte> const data{std::byte(1), std::byte(2), std::byte(3)};
 
   Socket socket;
-  socket.set_option(skynet::nonblock(true));
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::nonblock(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
 
   EXPECT_EQ(socket.sendto(data, sockaddr), data.size());
   std::vector<std::byte> buffer(data.size());
@@ -45,15 +45,15 @@ constexpr void bind(Sockaddr const & sockaddr) noexcept
   requires(skynet::concepts::socket<Socket, Sockaddr>)
 {
   Socket socket;
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
   EXPECT_EQ(socket.bind(sockaddr), skynet::bind_status::kSuccess);
   EXPECT_ANY_THROW(socket.bind(sockaddr));
 
   Socket other;
   EXPECT_EQ(other.bind(sockaddr), skynet::bind_status::kInUse);
-  other.set_option(skynet::reuseaddr(true));
-  other.set_option(skynet::reuseport(true));
+  other.set_option(skynet::options::reuseaddr(true));
+  other.set_option(skynet::options::reuseport(true));
   EXPECT_EQ(other.bind(sockaddr), skynet::bind_status::kSuccess);
 }
 
@@ -63,8 +63,8 @@ constexpr void connect(Sockaddr const & sockaddr,
   requires(skynet::concepts::socket<Socket, Sockaddr>)
 {
   Socket socket;
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
 
   EXPECT_EQ(socket.connect(sockaddr), connect_status);
 }
@@ -77,9 +77,9 @@ constexpr void sockaddrs(Sockaddr const & sockaddr,
   requires(skynet::concepts::socket<Socket, Sockaddr>)
 {
   Socket socket;
-  socket.set_option(skynet::nonblock(true));
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::nonblock(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
 
   auto out_sockaddr = sockaddr;
   EXPECT_NO_THROW((socket.getsockname(out_sockaddr)));
@@ -103,9 +103,9 @@ constexpr void unconnected_accept(Sockaddr const & sockaddr) noexcept
   requires(skynet::concepts::stream_socket<Socket, Sockaddr>)
 {
   Socket socket;
-  socket.set_option(skynet::nonblock(true));
-  socket.set_option(skynet::reuseaddr(true));
-  socket.set_option(skynet::reuseport(true));
+  socket.set_option(skynet::options::nonblock(true));
+  socket.set_option(skynet::options::reuseaddr(true));
+  socket.set_option(skynet::options::reuseport(true));
   socket.bind(sockaddr);
 
   Socket peer(skynet::uninitialized);
@@ -121,8 +121,8 @@ constexpr void blocking_handshake(Sockaddr const & sockaddr) noexcept
   std::vector<std::byte> const data{std::byte(1), std::byte(2), std::byte(3)};
 
   Socket server;
-  server.set_option(skynet::reuseaddr(true));
-  server.set_option(skynet::reuseport(true));
+  server.set_option(skynet::options::reuseaddr(true));
+  server.set_option(skynet::options::reuseport(true));
   server.bind(sockaddr);
   server.listen(1);
 
@@ -137,8 +137,8 @@ constexpr void blocking_handshake(Sockaddr const & sockaddr) noexcept
   });
 
   Socket client;
-  client.set_option(skynet::reuseaddr(true));
-  client.set_option(skynet::reuseport(true));
+  client.set_option(skynet::options::reuseaddr(true));
+  client.set_option(skynet::options::reuseport(true));
 
   EXPECT_EQ(client.connect(sockaddr), skynet::connect_status::kSuccess);
   EXPECT_EQ(client.send(data), data.size());
@@ -156,8 +156,8 @@ constexpr void blocking_handshake(Sockaddr const & server_sockaddr,
   std::vector<std::byte> const data{std::byte(1), std::byte(2), std::byte(3)};
 
   Socket server;
-  server.set_option(skynet::reuseaddr(true));
-  server.set_option(skynet::reuseport(true));
+  server.set_option(skynet::options::reuseaddr(true));
+  server.set_option(skynet::options::reuseport(true));
   server.bind(server_sockaddr);
 
   std::jthread const server_thread([&server, &client_sockaddr, &data] -> void {
@@ -178,8 +178,8 @@ constexpr void blocking_handshake(Sockaddr const & server_sockaddr,
   std::vector<std::byte> buffer(data.size());
 
   Socket client;
-  client.set_option(skynet::reuseaddr(true));
-  client.set_option(skynet::reuseport(true));
+  client.set_option(skynet::options::reuseaddr(true));
+  client.set_option(skynet::options::reuseport(true));
   client.bind(client_sockaddr);
 
   EXPECT_EQ(client.sendto(data, server_sockaddr), data.size());
@@ -201,16 +201,16 @@ constexpr void nonblocking_handshake(Sockaddr const & sockaddr,
   std::vector<std::byte> const data{std::byte(1), std::byte(2), std::byte(3)};
 
   Socket server;
-  server.set_option(skynet::nonblock(true));
-  server.set_option(skynet::reuseaddr(true));
-  server.set_option(skynet::reuseport(true));
+  server.set_option(skynet::options::nonblock(true));
+  server.set_option(skynet::options::reuseaddr(true));
+  server.set_option(skynet::options::reuseport(true));
   server.bind(sockaddr);
   server.listen(1);
 
   Socket client;
-  client.set_option(skynet::nonblock(true));
-  client.set_option(skynet::reuseaddr(true));
-  client.set_option(skynet::reuseport(true));
+  client.set_option(skynet::options::nonblock(true));
+  client.set_option(skynet::options::reuseaddr(true));
+  client.set_option(skynet::options::reuseport(true));
 
   EXPECT_EQ(client.connect(sockaddr), connect_status);
   Socket peer(skynet::uninitialized);
@@ -233,15 +233,15 @@ constexpr void nonblocking_handshake(Sockaddr const & server_sockaddr,
   std::vector<std::byte> const data{std::byte(1), std::byte(2), std::byte(3)};
 
   Socket server;
-  server.set_option(skynet::nonblock(true));
-  server.set_option(skynet::reuseaddr(true));
-  server.set_option(skynet::reuseport(true));
+  server.set_option(skynet::options::nonblock(true));
+  server.set_option(skynet::options::reuseaddr(true));
+  server.set_option(skynet::options::reuseport(true));
   server.bind(server_sockaddr);
 
   Socket client;
-  client.set_option(skynet::nonblock(true));
-  client.set_option(skynet::reuseaddr(true));
-  client.set_option(skynet::reuseport(true));
+  client.set_option(skynet::options::nonblock(true));
+  client.set_option(skynet::options::reuseaddr(true));
+  client.set_option(skynet::options::reuseport(true));
   client.bind(client_sockaddr);
 
   auto peer(server_sockaddr);

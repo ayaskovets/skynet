@@ -16,35 +16,35 @@ namespace skynet {
  * native_sockaddr() method
  */
 class base_sockaddr {
-  /**
-   * @note Required for base_socket to implement sockaddr methods that have to
-   * construct or mutate sockaddr storage in any way e.g. bind or connect
-   */
-  friend class base_socket;
-
  protected:
+  /**
+   * @brief Allocate storage needed for a sockaddr of this family
+   */
   explicit base_sockaddr(family family);
+
+ public:
+  auto operator==(base_sockaddr const & that) const noexcept -> bool;
+
+ public:
+  [[nodiscard]] auto socklen() const noexcept -> std::size_t;
+  [[nodiscard]] auto family() const noexcept -> family;
+
+ public:
+  [[nodiscard]] auto to_string() const -> std::string;
 
  protected:
   [[nodiscard]] auto native_sockaddr() noexcept -> void *;
   [[nodiscard]] auto native_sockaddr() const noexcept -> void const *;
 
- public:
-  auto operator==(base_sockaddr const & that) const -> bool;
-  auto operator!=(base_sockaddr const & that) const -> bool;
-
- public:
-  /**
-   * @brief Storage size in bytes
-   */
-  [[nodiscard]] auto length() const -> std::size_t;
-  [[nodiscard]] auto family() const -> family;
-
- public:
-  [[nodiscard]] auto to_string() const -> std::string;
-
  private:
   swiss::unchecked_any impl_;
+
+ private:
+  /**
+   * @note Required for base_socket to implement sockaddr methods that have to
+   * construct or mutate sockaddr storage in any way e.g. bind or connect
+   */
+  friend class base_socket;
 };
 
 }  // namespace skynet

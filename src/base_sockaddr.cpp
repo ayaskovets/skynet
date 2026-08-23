@@ -1,11 +1,17 @@
 #include <skynet/base_sockaddr.hpp>
 
+#include <utility>
+
 #include "platform/platform.hpp"  // IWYU pragma: keep
 
 namespace skynet {
 
 base_sockaddr::base_sockaddr(enum family family)
     : impl_([family] -> swiss::unchecked_any {
+        /**
+         * @warning Additional sockaddr families must be implemented throughout
+         * the whole class otherwise its operations invoke UB
+         */
         switch (family) {
           case family::kUnspec:
             throw std::invalid_argument(
@@ -20,15 +26,8 @@ base_sockaddr::base_sockaddr(enum family family)
         }
       }()) {}
 
-auto base_sockaddr::native_sockaddr() noexcept -> void * {
-  return impl_.get<void>();
-}
-
-auto base_sockaddr::native_sockaddr() const noexcept -> void const * {
-  return impl_.get<void>();
-}
-
-auto base_sockaddr::operator==(base_sockaddr const & that) const -> bool {
+auto base_sockaddr::operator==(base_sockaddr const & that) const noexcept
+    -> bool {
   switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET: {
       auto const * this_sockaddr = impl_.get<::sockaddr_in>();
@@ -54,16 +53,15 @@ auto base_sockaddr::operator==(base_sockaddr const & that) const -> bool {
       return std::strncmp(this_sockaddr->sun_path, that_sockaddr->sun_path,
                           sizeof(::sockaddr_un{}.sun_path)) == 0;
     }
-    [[unlikely]] default:
-      throw std::runtime_error("base_sockaddr::operator==(): unimplemented");
+    default:
+      /**
+       * @note Family switch is handled in the constructor
+       */
+      std::unreachable();
   }
 }
 
-auto base_sockaddr::operator!=(base_sockaddr const & that) const -> bool {
-  return !operator==(that);
-}
-
-auto base_sockaddr::length() const -> std::size_t {
+auto base_sockaddr::socklen() const noexcept -> std::size_t {
   switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET:
       return sizeof(::sockaddr_in);
@@ -71,12 +69,15 @@ auto base_sockaddr::length() const -> std::size_t {
       return sizeof(::sockaddr_in6);
     case AF_UNIX:
       return sizeof(::sockaddr_un);
-    [[unlikely]] default:
-      throw std::runtime_error("base_sockaddr::length(): unimplemented");
+    default:
+      /**
+       * @note Family switch is handled in the constructor
+       */
+      std::unreachable();
   }
 }
 
-auto base_sockaddr::family() const -> enum family {
+auto base_sockaddr::family() const noexcept -> enum family {
   switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET:
       return family::kInet;
@@ -84,8 +85,11 @@ auto base_sockaddr::family() const -> enum family {
       return family::kInet6;
     case AF_UNIX:
       return family::kUnix;
-    [[unlikely]] default:
-      throw std::runtime_error("base_sockaddr::family(): unimplemented");
+    default:
+      /**
+       * @note Family switch is handled in the constructor
+       */
+      std::unreachable();
   }
 }
 
@@ -147,10 +151,21 @@ auto base_sockaddr::to_string() const -> std::string {
       string.resize(std::min(string.capacity(), string.find('\0')));
       break;
     }
-    [[unlikely]] default:
-      throw std::runtime_error("base_sockaddr::to_string(): unimplemented");
+    default:
+      /**
+       * @note Family switch is handled in the constructor
+       */
+      std::unreachable();
   }
   return string;
+}
+
+auto base_sockaddr::native_sockaddr() noexcept -> void * {
+  return impl_.get<void>();
+}
+
+auto base_sockaddr::native_sockaddr() const noexcept -> void const * {
+  return impl_.get<void>();
 }
 
 }  // namespace skynet

@@ -51,6 +51,11 @@ class poller final : public swiss::non_copyable {
    */
   [[nodiscard]] auto size() const noexcept -> std::size_t;
 
+  /**
+   * @brief Non-binding request to shrink the underlying buffers
+   */
+  void shrink_to_fit();
+
  public:
   /**
    * @brief Poll for selected events for the socket
@@ -58,12 +63,6 @@ class poller final : public swiss::non_copyable {
    * @return True if the socket was inserted
    */
   void insert(base_socket sock, events_t events);
-
- public:
-  /**
-   * @brief Non-binding request to shrink the underlying buffers
-   */
-  void shrink_to_fit();
 
  public:
   /**

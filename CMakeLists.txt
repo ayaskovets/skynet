@@ -70,7 +70,8 @@ set(HEADERS
     include/skynet/inet6/udp/socket.hpp
     include/skynet/multiplexing.hpp
     include/skynet/network_byte_order.hpp
-    include/skynet/options.hpp
+    include/skynet/option.hpp
+    include/skynet/options/options.hpp
     include/skynet/platform/platform.hpp
     include/skynet/platform/unix.hpp
     include/skynet/protocol.hpp

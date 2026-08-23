@@ -1,6 +1,6 @@
 #include <skynet/inet/tcp/socket.hpp>
 #include <skynet/multiplexing.hpp>
-#include <skynet/options.hpp>
+#include <skynet/option.hpp>
 
 #include <gtest/gtest.h>
 #include <swiss/functional.hpp>
@@ -45,13 +45,13 @@ TEST(multiplexing, callback_smoke) {
                                         skynet::inet::port(9999));
 
   skynet::inet::tcp::socket server;
-  server.set_option(skynet::reuseaddr(true));
-  server.set_option(skynet::nonblock(true));
+  server.set_option(skynet::options::reuseaddr(true));
+  server.set_option(skynet::options::nonblock(true));
   server.bind(sockaddr);
   server.listen(1);
 
   skynet::inet::tcp::socket client;
-  client.set_option(skynet::nonblock(true));
+  client.set_option(skynet::options::nonblock(true));
 
   poller.insert(std::move(server), skynet::poller::kPollIn);
   EXPECT_EQ(poller.size(), 1);
