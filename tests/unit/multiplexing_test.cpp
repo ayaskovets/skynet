@@ -17,12 +17,12 @@ TEST(multiplexing, size) {
 
 TEST(multiplexing, move) {
   std::size_t calls = 0;
-  skynet::poller moved_from(
-      [&calls](skynet::base_socket const &, skynet::poller::events_t) noexcept
-          -> skynet::poller::callback_result {
-        calls += 1;
-        return skynet::poller::callback_result::kDoNothing;
-      });
+  skynet::poller moved_from([&calls](skynet::base_socket const &,
+                                     skynet::poller::events_type) noexcept
+                                -> skynet::poller::callback_result {
+    calls += 1;
+    return skynet::poller::callback_result::kDoNothing;
+  });
   skynet::poller const moved_to(std::move(moved_from));
 
   EXPECT_EQ(moved_from.size(), 0);
@@ -33,7 +33,7 @@ TEST(multiplexing, move) {
 TEST(multiplexing, callback_smoke) {
   std::size_t calls = 0;
   skynet::poller poller([&calls](skynet::base_socket const & sock,
-                                 skynet::poller::events_t) noexcept
+                                 skynet::poller::events_type) noexcept
                             -> skynet::poller::callback_result {
     EXPECT_EQ(sock.family(), skynet::family::kInet);
     EXPECT_EQ(sock.socktype(), skynet::socktype::kStream);
@@ -65,12 +65,12 @@ TEST(multiplexing, callback_smoke) {
 
 TEST(multiplexing, destructor) {
   std::size_t calls = 0;
-  skynet::poller poller(
-      [&calls](skynet::base_socket const &, skynet::poller::events_t) noexcept
-          -> skynet::poller::callback_result {
-        calls += 1;
-        return skynet::poller::callback_result::kDoNothing;
-      });
+  skynet::poller poller([&calls](skynet::base_socket const &,
+                                 skynet::poller::events_type) noexcept
+                            -> skynet::poller::callback_result {
+    calls += 1;
+    return skynet::poller::callback_result::kDoNothing;
+  });
 
   skynet::inet::sockaddr const sockaddr(skynet::inet::ip::kLoopback(),
                                         skynet::inet::port(9999));

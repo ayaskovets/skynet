@@ -14,7 +14,7 @@ namespace skynet {
 namespace {
 
 template <typename Optval>
-constexpr void setsockopt(platform::native_handle_t handle, int level,
+constexpr void setsockopt(platform::native_handle_type handle, int level,
                           int optname, Optval optval) {
   auto const retval =
       ::setsockopt(handle, level, optname, &optval, sizeof(Optval));
@@ -26,7 +26,7 @@ constexpr void setsockopt(platform::native_handle_t handle, int level,
 }
 
 template <typename Optval>
-constexpr void getsockopt(platform::native_handle_t handle, int level,
+constexpr void getsockopt(platform::native_handle_type handle, int level,
                           int optname, Optval & optval) {
   platform::socklen_t optlen = sizeof(optval);
   auto const retval = ::getsockopt(handle, level, optname, &optval, &optlen);
@@ -46,9 +46,10 @@ base_socket::base_socket(uninitialized_t) noexcept
 base_socket::base_socket(enum family family, enum socktype socktype,
                          enum protocol protocol)
     : pimpl_([family, socktype, protocol] -> impl {
-        platform::native_handle_t const handle = platform::create_native_handle(
-            to_native_family(family), to_native_socktype(socktype),
-            to_native_protocol(protocol));
+        platform::native_handle_type const handle =
+            platform::create_native_handle(to_native_family(family),
+                                           to_native_socktype(socktype),
+                                           to_native_protocol(protocol));
 
         if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
           throw std::runtime_error(
@@ -66,7 +67,7 @@ base_socket::base_socket(base_socket const & that)
     return;
   }
 
-  platform::native_handle_t const handle =
+  platform::native_handle_type const handle =
       platform::copy_native_handle(*that.native_handle());
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
     throw std::runtime_error(
@@ -82,7 +83,7 @@ auto base_socket::operator=(base_socket const & that) -> base_socket & {
     return *this;
   }
 
-  platform::native_handle_t const handle =
+  platform::native_handle_type const handle =
       platform::copy_native_handle(*that.native_handle());
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
     throw std::runtime_error(
@@ -406,7 +407,8 @@ void base_socket::listen(std::size_t backlog) {
 }
 
 auto base_socket::accept(base_socket & socket) const -> accept_status {
-  platform::native_handle_t const handle = platform::accept(*native_handle());
+  platform::native_handle_type const handle =
+      platform::accept(*native_handle());
 
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
     std::errc const error = platform::get_last_error();

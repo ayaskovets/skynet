@@ -10,10 +10,10 @@ namespace skynet {
 
 class base_socket::impl final
     : public swiss::strong_typedef<class native_handle_tag,
-                                   platform::native_handle_t> {
+                                   platform::native_handle_type> {
  public:
   using swiss::strong_typedef<native_handle_tag,
-                              platform::native_handle_t>::strong_typedef;
+                              platform::native_handle_type>::strong_typedef;
 };
 
 }  // namespace skynet

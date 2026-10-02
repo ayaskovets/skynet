@@ -28,8 +28,10 @@
  */
 namespace skynet::platform {
 
-using native_handle_t = int;
-using socklen_t       = ::socklen_t;
+using native_handle_type = int;
+using socklen_t          = ::socklen_t;
+using pollfd             = ::pollfd;
+using nfds_t             = ::nfds_t;
 
 }  // namespace skynet::platform
 
@@ -38,8 +40,8 @@ using socklen_t       = ::socklen_t;
  */
 namespace skynet::platform {
 
-constexpr native_handle_t kInvalidNativeHandle = -1;
-constexpr int kErrorRetval                     = -1;
+constexpr native_handle_type kInvalidNativeHandle = -1;
+constexpr int kErrorRetval                        = -1;
 
 }  // namespace skynet::platform
 
@@ -49,8 +51,8 @@ constexpr int kErrorRetval                     = -1;
 namespace skynet::platform {
 
 constexpr auto create_native_handle(int family, int type, int protocol) noexcept
-    -> native_handle_t {
-  native_handle_t const handle = ::socket(family, type, protocol);
+    -> native_handle_type {
+  native_handle_type const handle = ::socket(family, type, protocol);
   if (handle != kInvalidNativeHandle) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
     std::ignore = ::fcntl(handle, F_SETFD, FD_CLOEXEC);
@@ -58,18 +60,18 @@ constexpr auto create_native_handle(int family, int type, int protocol) noexcept
   return handle;
 }
 
-constexpr auto copy_native_handle(native_handle_t handle) noexcept
-    -> native_handle_t {
+constexpr auto copy_native_handle(native_handle_type handle) noexcept
+    -> native_handle_type {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
   return ::fcntl(handle, F_DUPFD_CLOEXEC, 0);
 }
 
-constexpr auto close_native_handle(native_handle_t handle) noexcept -> int {
+constexpr auto close_native_handle(native_handle_type handle) noexcept -> int {
   return ::close(handle);
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-constexpr auto set_nonblock(native_handle_t handle, int optval) noexcept
+constexpr auto set_nonblock(native_handle_type handle, int optval) noexcept
     -> int {
   int const flags = ::fcntl(handle, F_GETFL, 0);
   if (flags == platform::kErrorRetval) [[unlikely]] {
@@ -87,18 +89,23 @@ constexpr auto set_nonblock(native_handle_t handle, int optval) noexcept
   return 0;
 }
 
-constexpr auto get_nonblock(native_handle_t handle) noexcept -> int {
+constexpr auto get_nonblock(native_handle_type handle) noexcept -> int {
   // NOLINTNEXTLINE(hicpp-signed-bitwise,cppcoreguidelines-pro-type-vararg)
   return ((::fcntl(handle, F_GETFL) & O_NONBLOCK) != 0) ? 1 : 0;
 }
 
-constexpr auto accept(native_handle_t srv_handle) noexcept -> native_handle_t {
-  native_handle_t const handle = ::accept(srv_handle, nullptr, nullptr);
+constexpr auto accept(native_handle_type srv_handle) noexcept
+    -> native_handle_type {
+  native_handle_type const handle = ::accept(srv_handle, nullptr, nullptr);
   if (handle != kInvalidNativeHandle) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
     std::ignore = ::fcntl(handle, F_SETFD, FD_CLOEXEC);
   }
   return handle;
+}
+
+constexpr auto poll(pollfd * fds, nfds_t nfds, int timeout) noexcept -> int {
+  return ::poll(fds, nfds, timeout);
 }
 
 constexpr auto unlink(std::filesystem::path const & path) noexcept -> int {

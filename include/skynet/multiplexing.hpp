@@ -24,18 +24,19 @@ class poller final : public swiss::non_copyable {
     kPollHup  = 1U << 4U,  ///< Connection hang up
     kPollNval = 1U << 5U,  ///< Invalid fd
   };
-  using events_t = std::underlying_type_t<event>;
+  using events_type = std::underlying_type_t<event>;
 
  public:
   enum class callback_result : std::uint8_t {
     kClose,      ///< Close the socket after the callback exit
     kDoNothing,  ///< Do nothing after the callback exit
   };
-  using callback_t =
-      swiss::noexcept_function<callback_result, base_socket const &, events_t>;
+  using callback_type =
+      swiss::noexcept_function<callback_result, base_socket const &,
+                               events_type>;
 
  public:
-  explicit poller(callback_t const & callback);
+  explicit poller(callback_type const & callback);
   poller(poller &&) noexcept;
   auto operator=(poller &&) noexcept -> poller &;
   ~poller() noexcept;
@@ -62,7 +63,7 @@ class poller final : public swiss::non_copyable {
    * @note Safe to call from the callback. Not thread-safe
    * @return True if the socket was inserted
    */
-  void insert(base_socket sock, events_t events);
+  void insert(base_socket sock, events_type events);
 
  public:
   /**
@@ -75,7 +76,7 @@ class poller final : public swiss::non_copyable {
  private:
   struct impl;
   swiss::static_pimpl<impl, 48, 8> pimpl_;
-  callback_t callback_;
+  callback_type callback_;
 };
 
 }  // namespace skynet

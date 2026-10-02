@@ -16,51 +16,60 @@
 #include "unix.hpp"
 #endif
 
-namespace skynet::platform {
+namespace skynet::platform::concepts {
 
 template <typename Platform = void>
-concept _private_platform =
-    requires(native_handle_t handle, int family, int type, int protocol,
-             int optval, std::filesystem::path path) {
-      /**
-       * @section Types
-       */
-      { handle } -> swiss::not_same_as<void>;
+concept is_valid_platform_implementaiton = requires(
+    platform::native_handle_type handle, platform::socklen_t socklen,
+    platform::pollfd pollfd, platform::nfds_t nfds, int family, int type,
+    int protocol, int optval, int timeout, std::filesystem::path path) {
+  /**
+   * @section Types
+   */
+  { handle } -> swiss::not_same_as<void>;
+  { socklen } -> swiss::not_same_as<void>;
+  { pollfd } -> swiss::not_same_as<void>;
+  { nfds } -> swiss::not_same_as<void>;
 
-      /**
-       * @section Constants
-       */
-      { kInvalidNativeHandle } -> swiss::decay_same_as<native_handle_t>;
-      { kErrorRetval } -> swiss::decay_same_as<int>;
+  /**
+   * @section Constants
+   */
+  {
+    platform::kInvalidNativeHandle
+  } -> swiss::decay_same_as<native_handle_type>;
+  { platform::kErrorRetval } -> swiss::decay_same_as<int>;
 
-      /**
-       * @section Functions
-       */
-      {
-        create_native_handle(family, type, protocol)
-      } -> std::same_as<native_handle_t>;
-      { copy_native_handle(handle) } -> std::same_as<int>;
-      { close_native_handle(handle) } -> std::same_as<int>;
-      { set_nonblock(handle, optval) } -> std::same_as<int>;
-      { get_nonblock(handle) } -> std::same_as<int>;
-      { accept(handle) } -> std::same_as<native_handle_t>;
-      { unlink(path) } -> std::same_as<int>;
-      { get_last_error() } -> std::same_as<std::errc>;
-      { errno_strerror() } -> std::same_as<std::string>;
+  /**
+   * @section Functions
+   */
+  {
+    platform::create_native_handle(family, type, protocol)
+  } -> std::same_as<native_handle_type>;
+  { platform::copy_native_handle(handle) } -> std::same_as<int>;
+  { platform::close_native_handle(handle) } -> std::same_as<int>;
+  { platform::set_nonblock(handle, optval) } -> std::same_as<int>;
+  { platform::get_nonblock(handle) } -> std::same_as<int>;
+  { platform::accept(handle) } -> std::same_as<native_handle_type>;
+  { platform::poll(&pollfd, nfds, timeout) } -> std::same_as<int>;
+  { platform::unlink(path) } -> std::same_as<int>;
+  { platform::get_last_error() } -> std::same_as<std::errc>;
+  { platform::errno_strerror() } -> std::same_as<std::string>;
 
-      /**
-       * @section Exceptions
-       */
-      requires noexcept(create_native_handle(family, type, protocol));
-      requires noexcept(close_native_handle(handle));
-      requires noexcept(copy_native_handle(handle));
-      requires noexcept(set_nonblock(handle, optval));
-      requires noexcept(get_nonblock(handle));
-      requires noexcept(accept(handle));
-      requires noexcept(unlink(path));
-      requires noexcept(get_last_error());
-      requires noexcept(errno_strerror());
-    };
-static_assert(_private_platform<>, "invalid platform implementation");
+  /**
+   * @section Exceptions
+   */
+  requires noexcept(platform::create_native_handle(family, type, protocol));
+  requires noexcept(platform::close_native_handle(handle));
+  requires noexcept(platform::copy_native_handle(handle));
+  requires noexcept(platform::set_nonblock(handle, optval));
+  requires noexcept(platform::get_nonblock(handle));
+  requires noexcept(platform::accept(handle));
+  requires noexcept(platform::poll(&pollfd, nfds, timeout));
+  requires noexcept(platform::unlink(path));
+  requires noexcept(platform::get_last_error());
+  requires noexcept(platform::errno_strerror());
+};
+static_assert(is_valid_platform_implementaiton<>,
+              "invalid platform implementation");
 
-}  // namespace skynet::platform
+}  // namespace skynet::platform::concepts

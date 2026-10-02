@@ -12,7 +12,7 @@ namespace skynet {
 namespace {
 // NOLINTBEGIN(hicpp-signed-bitwise)
 
-constexpr auto to_native_events(poller::events_t events) noexcept
+constexpr auto to_native_events(poller::events_type events) noexcept
     -> std::int16_t {
   std::int16_t native_events{};
   native_events |= ((events & poller::event::kPollIn) != 0) ? POLLIN : 0;
@@ -25,8 +25,8 @@ constexpr auto to_native_events(poller::events_t events) noexcept
 }
 
 constexpr auto from_native_events(std::int16_t native_events) noexcept
-    -> poller::events_t {
-  poller::events_t events{};
+    -> poller::events_type {
+  poller::events_type events{};
   events |= ((native_events & POLLIN) != 0) ? poller::event::kPollIn : 0;
   events |= ((native_events & POLLPRI) != 0) ? poller::event::kPollPri : 0;
   events |= ((native_events & POLLOUT) != 0) ? poller::event::kPollOut : 0;
@@ -40,11 +40,11 @@ constexpr auto from_native_events(std::int16_t native_events) noexcept
 }  // namespace
 
 struct poller::impl final {
-  std::vector<::pollfd> polling;
-  std::vector<::pollfd> pending;
+  std::vector<platform::pollfd> polling;
+  std::vector<platform::pollfd> pending;
 };
 
-poller::poller(callback_t const & callback) : callback_(callback) {
+poller::poller(callback_type const & callback) : callback_(callback) {
   if (!callback_) [[unlikely]] {
     throw std::invalid_argument("poller::poller(): null callback");
   }
@@ -66,11 +66,11 @@ poller::~poller() noexcept {
   /**
    * @note All socket handles get freed via temporary socket objects
    */
-  for (::pollfd const pollfd : polling) {
+  for (platform::pollfd const pollfd : polling) {
     base_socket sock(uninitialized);
     *sock.native_handle() = pollfd.fd;
   }
-  for (::pollfd const pollfd : pending) {
+  for (platform::pollfd const pollfd : pending) {
     base_socket sock(uninitialized);
     *sock.native_handle() = pollfd.fd;
   }
@@ -95,10 +95,10 @@ void poller::shrink_to_fit() {
   pending.shrink_to_fit();
 }
 
-void poller::insert(base_socket sock, events_t events) {
+void poller::insert(base_socket sock, events_type events) {
   auto & [polling, pending] = *pimpl_;
 
-  ::pollfd const pollfd{
+  platform::pollfd const pollfd{
       .fd      = *sock.native_handle(),
       .events  = to_native_events(events),
       .revents = {},
@@ -135,9 +135,9 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
     pending.clear();
   }
 
-  auto const retval =
-      ::poll(polling.data(), static_cast<::nfds_t>(polling.size()),
-             swiss::bound<int>(milliseconds.count()));
+  auto const retval = platform::poll(
+      polling.data(), static_cast<platform::nfds_t>(polling.size()),
+      swiss::bound<int>(milliseconds.count()));
   if (retval == platform::kErrorRetval) [[unlikely]] {
     throw std::runtime_error(
         std::format("poller::poll_for(): {}", platform::errno_strerror()));
