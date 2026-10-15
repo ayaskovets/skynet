@@ -49,6 +49,7 @@ class base_socket {
  public:
   [[nodiscard]] auto family() const -> family;
   [[nodiscard]] auto socktype() const -> socktype;
+  [[nodiscard]] auto hash() const noexcept -> std::size_t;
 
   auto bind(base_sockaddr const & sockaddr) -> bind_status;
   auto connect(base_sockaddr const & sockaddr) -> connect_status;
@@ -98,3 +99,12 @@ class base_socket {
 };
 
 }  // namespace skynet
+
+/**
+ * @brief Hash specialization for base_socket
+ */
+template <>
+struct std::hash<skynet::base_socket> {
+  auto operator()(skynet::base_socket const & socket) const noexcept
+      -> std::size_t;
+};

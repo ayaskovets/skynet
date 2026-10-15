@@ -174,6 +174,10 @@ auto base_socket::socktype() const -> skynet::socktype {
   return from_native_socktype(optval);
 }
 
+auto base_socket::hash() const noexcept -> std::size_t {
+  return std::hash<int>{}(*native_handle());
+}
+
 auto base_socket::bind(base_sockaddr const & sockaddr) -> bind_status {
   auto const retval =
       ::bind(*native_handle(),
@@ -505,3 +509,8 @@ auto base_socket::recvfrom(std::span<std::byte> bytes, base_sockaddr & sockaddr)
 }
 
 }  // namespace skynet
+
+auto std::hash<skynet::base_socket>::operator()(
+    skynet::base_socket const & socket) const noexcept -> std::size_t {
+  return socket.hash();
+}
