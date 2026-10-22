@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <span>
 
 #include <swiss/functional.hpp>
 #include <swiss/mixins.hpp>
@@ -12,6 +13,8 @@ namespace skynet {
 
 /**
  * @brief IO multiplexing class
+ * @warning Does not own sockets being polled for IO events. Each socket added
+ * for polling must be erased before it gets closed to prevent UB
  */
 // NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 class poller final : public swiss::non_copyable {
@@ -26,17 +29,37 @@ class poller final : public swiss::non_copyable {
   };
   using events_type = std::underlying_type_t<event>;
 
- public:
-  enum class callback_result : std::uint8_t {
-    kClose,      ///< Close the socket after the callback exit
-    kDoNothing,  ///< Do nothing after the callback exit
+  // NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
+  class ticket final : public swiss::non_copyable {
+   private:
+    explicit constexpr ticket(std::size_t index) noexcept : index_(index) {}
+
+   public:
+    constexpr ticket(ticket && that) noexcept
+        : index_(std::exchange(that.index_, std::dynamic_extent)) {}
+
+    constexpr auto operator=(ticket && that) noexcept -> ticket & {
+      std::swap(index_, that.index_);
+      return *this;
+    }
+
+   private:
+    std::size_t index_;
+
+   private:
+    [[nodiscard]] constexpr auto is_moved_from() const noexcept -> bool {
+      return index_ == std::dynamic_extent;
+    }
+
+   private:
+    /**
+     * @note For poller to create and access the underlying ticket value
+     */
+    friend class poller;
   };
-  using callback_type =
-      swiss::noexcept_function<callback_result, base_socket const &,
-                               events_type>;
 
  public:
-  explicit poller(callback_type const & callback);
+  poller() noexcept;
   poller(poller &&) noexcept;
   auto operator=(poller &&) noexcept -> poller &;
   ~poller() noexcept;
@@ -55,15 +78,30 @@ class poller final : public swiss::non_copyable {
   /**
    * @brief Non-binding request to shrink the underlying buffers
    */
-  void shrink_to_fit();
+  void shrink_to_fit() noexcept;
 
  public:
   /**
-   * @brief Poll for selected events for the socket
-   * @note Safe to call from the callback. Not thread-safe
-   * @return True if the socket was inserted
+   * @brief Track the selected events for the socket for future polling
+   * @warning Not safe to call from the callback
+   * @warning Not thread-safe
+   * @return Ticket that should be used to erase the socket from poller before
+   * socket is destroyed
    */
-  void insert(base_socket sock, events_type events);
+  auto insert(base_socket const & sock, events_type events) -> ticket;
+
+  /**
+   * @brief Track the selected events for the already inserted socket for future
+   * polling
+   * @warning Not safe to call from the callback
+   * @warning Not thread-safe
+   */
+  void update(ticket const & ticket, events_type events);
+
+  /**
+   * @brief Remove socket from polling list
+   */
+  void erase(ticket ticket);
 
  public:
   /**
@@ -76,7 +114,6 @@ class poller final : public swiss::non_copyable {
  private:
   struct impl;
   swiss::static_pimpl<impl, 48, 8> pimpl_;
-  callback_type callback_;
 };
 
 }  // namespace skynet
