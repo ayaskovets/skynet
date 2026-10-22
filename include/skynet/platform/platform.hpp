@@ -9,9 +9,8 @@
  * platform header. The implementation must reside in the 'skynet::platform'
  * namespace
  */
-#if (SWISS_OS_KIND == kLinux) || (SWISS_OS_KIND == kUnix) || \
-    (SWISS_OS_KIND == kMacOS)
-#include "unix.hpp"
+#if (SWISS_OS_KIND == kMacOS)
+#include "bsd.hpp"
 #endif
 
 namespace skynet::platform {
