@@ -140,10 +140,10 @@ constexpr auto set_filter(native_handle_type poller, native_handle_type socket,
   struct ::kevent event{};
   switch (filter) {
     case kPollin:
-      EV_SET(&event, socket, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, data);
+      EV_SET(&event, socket, EVFILT_READ, EV_ADD, 0, 0, data);
       break;
     case kPollout:
-      EV_SET(&event, socket, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, data);
+      EV_SET(&event, socket, EVFILT_WRITE, EV_ADD, 0, 0, data);
       break;
     default:
       errno = EINVAL;
