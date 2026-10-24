@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cerrno>
 #include <filesystem>
 #include <optional>
@@ -33,7 +32,7 @@ namespace skynet::platform {
 
 using native_handle_type = int;
 using socklen_t          = ::socklen_t;
-using event_filter_type  = std::int16_t;
+using event_filter_type  = std::uint8_t;
 using event_type         = struct ::kevent;
 
 }  // namespace skynet::platform
@@ -45,10 +44,10 @@ namespace skynet::platform {
 
 constexpr native_handle_type kInvalidNativeHandle = -1;
 constexpr int kErrorRetval                        = -1;
-constexpr event_filter_type kPollin               = EVFILT_READ;
-constexpr event_filter_type kPollout              = EVFILT_WRITE;
-constexpr event_filter_type kPollerr              = EV_ERROR;
-constexpr event_filter_type kPollhup              = EV_EOF;
+constexpr event_filter_type kPollin               = 1U << 0U;
+constexpr event_filter_type kPollout              = 1U << 1U;
+constexpr event_filter_type kPollerr              = 1U << 2U;
+constexpr event_filter_type kPollhup              = 1U << 3U;
 
 }  // namespace skynet::platform
 
@@ -139,20 +138,38 @@ constexpr auto set_filter(native_handle_type poller, native_handle_type socket,
                           event_filter_type filter, void * data) noexcept
     -> int {
   struct ::kevent event{};
-  EV_SET(&event, socket, filter, EV_ADD | EV_CLEAR, 0, 0, data);
+  switch (filter) {
+    case kPollin:
+      EV_SET(&event, socket, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, data);
+      break;
+    case kPollout:
+      EV_SET(&event, socket, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, data);
+      break;
+    default:
+      errno = EINVAL;
+      return kErrorRetval;
+  }
   return ::kevent(poller, &event, 1, nullptr, 0, nullptr);
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 constexpr auto remove_filter(native_handle_type poller,
-                             native_handle_type socket) noexcept -> int {
-  std::array<struct ::kevent, 2> events{};
-  // NOLINTNEXTLINE(readability-container-data-pointer)
-  EV_SET(&events[0], socket, kPollin, EV_DELETE, 0, 0, nullptr);
-  EV_SET(&events[1], socket, kPollout, EV_DELETE, 0, 0, nullptr);
+                             native_handle_type socket,
+                             event_filter_type filter) noexcept -> int {
+  struct ::kevent event{};
+  switch (filter) {
+    case kPollin:
+      EV_SET(&event, socket, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
+      break;
+    case kPollout:
+      EV_SET(&event, socket, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
+      break;
+    default:
+      errno = EINVAL;
+      return kErrorRetval;
+  }
 
-  auto const retval =
-      ::kevent(poller, events.data(), events.size(), nullptr, 0, nullptr);
+  auto const retval = ::kevent(poller, &event, 1, nullptr, 0, nullptr);
   if (retval == kErrorRetval && errno == ENOENT) {
     /**
      * @note Ignore ENOENT to allow silently dropping errors due to removing
@@ -186,7 +203,15 @@ constexpr auto wait_poller(
 
 constexpr auto get_event_filter(event_type event) noexcept
     -> event_filter_type {
-  return event.filter;
+  event_filter_type filter{};
+  filter |= event.filter == EVFILT_READ ? kPollin : 0;
+  filter |= event.filter == EVFILT_WRITE ? kPollout : 0;
+  filter |= ((event.flags & EV_ERROR) != 0 ||
+             ((event.flags & EV_EOF) != 0 && event.fflags != 0))
+                ? kPollerr
+                : 0;
+  filter |= (event.flags & EV_EOF) != 0 ? kPollhup : 0;
+  return filter;
 }
 
 constexpr auto get_event_data(event_type event) noexcept -> void * {

@@ -22,7 +22,7 @@ TEST(multiplexing, insert_erase) {
 
   poller.insert_or_assign(socket, skynet::poller::kPollIn, nullptr);
 
-  poller.erase(socket);
+  poller.erase(socket, skynet::poller::kPollIn);
 
   EXPECT_EQ(socket.family(), skynet::family::kInet);
   EXPECT_EQ(socket.socktype(), skynet::socktype::kStream);
@@ -37,7 +37,9 @@ TEST(multiplexing, insert_or_assign) {
   EXPECT_NO_THROW(
       poller.insert_or_assign(socket, skynet::poller::kPollOut, nullptr));
 
-  poller.erase(socket);
+  auto const filter = static_cast<skynet::poller::event_filter>(
+      skynet::poller::kPollIn | skynet::poller::kPollOut);
+  poller.erase(socket, filter);
 }
 
 TEST(multiplexing, socket_reuse) {
@@ -48,14 +50,16 @@ TEST(multiplexing, socket_reuse) {
   poller.insert_or_assign(first, skynet::poller::kPollIn, nullptr);
   poller.insert_or_assign(second, skynet::poller::kPollOut, nullptr);
 
-  poller.erase(first);
+  poller.erase(first, skynet::poller::kPollIn);
   EXPECT_NO_THROW(
       poller.insert_or_assign(second, skynet::poller::kPollIn, nullptr));
 
   poller.insert_or_assign(first, skynet::poller::kPollIn, nullptr);
 
-  poller.erase(second);
-  poller.erase(first);
+  auto const filter = static_cast<skynet::poller::event_filter>(
+      skynet::poller::kPollIn | skynet::poller::kPollOut);
+  poller.erase(second, filter);
+  poller.erase(first, skynet::poller::kPollIn);
 }
 
 TEST(multiplexing, poll_empty) {
@@ -78,7 +82,7 @@ TEST(multiplexing, poll_nonblocking) {
   EXPECT_TRUE(events.empty());
   EXPECT_EQ(events.begin(), events.end());
 
-  poller.erase(socket);
+  poller.erase(socket, skynet::poller::kPollIn);
 }
 
 TEST(multiplexing, poll_timeout) {
@@ -91,7 +95,7 @@ TEST(multiplexing, poll_timeout) {
   EXPECT_TRUE(events.empty());
   EXPECT_EQ(events.begin(), events.end());
 
-  poller.erase(socket);
+  poller.erase(socket, skynet::poller::kPollIn);
 }
 
 TEST(multiplexing, poll) {
@@ -100,7 +104,7 @@ TEST(multiplexing, poll) {
   skynet::inet::tcp::socket client;
   skynet::inet::tcp::socket peer(skynet::uninitialized);
   skynet::inet::sockaddr address(skynet::inet::ip::kLoopback(),
-                                skynet::inet::port(0));
+                                 skynet::inet::port(0));
 
   ASSERT_EQ(listener.bind(address), skynet::bind_status::kSuccess);
   listener.getsockname(address);
@@ -110,9 +114,12 @@ TEST(multiplexing, poll) {
 
   poller.insert_or_assign(client, skynet::poller::kPollOut, &client);
   poller.insert_or_assign(peer, skynet::poller::kPollOut, &peer);
+  poller.insert_or_assign(peer, skynet::poller::kPollIn, &client);
+  poller.erase(peer, skynet::poller::kPollIn);
 
   auto const events = poller.poll(std::nullopt);
   ASSERT_EQ(events.size(), 2);
+  EXPECT_NE((*events.begin()).data, (*std::next(events.begin())).data);
 
   std::size_t count = 0;
   for (auto const event : events) {
@@ -123,8 +130,11 @@ TEST(multiplexing, poll) {
 
   EXPECT_EQ(count, 2);
 
-  poller.erase(client);
-  poller.erase(peer);
+  auto const filter = static_cast<skynet::poller::event_filter>(
+      skynet::poller::kPollIn | skynet::poller::kPollOut);
+  poller.erase(client, filter);
+  poller.erase(peer, skynet::poller::kPollOut);
+  EXPECT_NO_THROW(poller.erase(peer, skynet::poller::kPollOut));
 }
 
 }  // namespace tests::unit

@@ -12,6 +12,11 @@ namespace skynet {
 
 namespace {
 
+/**
+ * @brief List of all input events
+ */
+constexpr auto kInputEvents = {poller::kPollIn, poller::kPollOut};
+
 constexpr auto to_native_events(poller::event_filter filter) noexcept
     -> platform::event_filter_type {
   switch (filter) {
@@ -24,23 +29,16 @@ constexpr auto to_native_events(poller::event_filter filter) noexcept
     case poller::kPollHup:
       return platform::kPollhup;
   }
-  std::unreachable();
 }
 
 constexpr auto from_native_events(platform::event_filter_type filter) noexcept
     -> poller::event_filter {
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-  switch (filter) {
-    case platform::kPollin:
-      return poller::kPollIn;
-    case platform::kPollout:
-      return poller::kPollOut;
-    case platform::kPollerr:
-      return poller::kPollErr;
-    case platform::kPollhup:
-      return poller::kPollHup;
-  }
-  std::unreachable();
+  std::uint8_t events{};
+  events |= (filter & platform::kPollin) != 0 ? poller::kPollIn : 0;
+  events |= (filter & platform::kPollout) != 0 ? poller::kPollOut : 0;
+  events |= (filter & platform::kPollerr) != 0 ? poller::kPollErr : 0;
+  events |= (filter & platform::kPollhup) != 0 ? poller::kPollHup : 0;
+  return static_cast<poller::event_filter>(events);
 }
 
 }  // namespace
@@ -90,7 +88,7 @@ void poller::insert_or_assign(base_socket const & socket, event_filter filter,
                               void * data) {
   auto & [queue, _] = *pimpl_;
 
-  for (event_filter const event : {kPollIn, kPollOut}) {
+  for (event_filter const event : kInputEvents) {
     if ((filter & event) == 0) {
       continue;
     }
@@ -104,13 +102,20 @@ void poller::insert_or_assign(base_socket const & socket, event_filter filter,
   }
 }
 
-void poller::erase(base_socket const & socket) {
+void poller::erase(base_socket const & socket, event_filter filter) {
   auto & [queue, _] = *pimpl_;
 
-  if (platform::remove_filter(queue, *socket.native_handle()) ==
-      platform::kErrorRetval) [[unlikely]] {
-    throw std::runtime_error(
-        std::format("poller::erase(): {}", platform::errno_strerror()));
+  for (event_filter const event : kInputEvents) {
+    if ((filter & event) == 0) {
+      continue;
+    }
+
+    if (platform::remove_filter(queue, *socket.native_handle(),
+                                to_native_events(event)) ==
+        platform::kErrorRetval) [[unlikely]] {
+      throw std::runtime_error(
+          std::format("poller::erase(): {}", platform::errno_strerror()));
+    }
   }
 }
 

@@ -64,7 +64,7 @@ concept is_valid_platform_implementaiton = requires(
   { platform::errno_strerror() } -> std::same_as<std::string>;
   { platform::create_poller() } -> std::same_as<platform::native_handle_type>;
   { platform::set_filter(poller, socket, filter, data) } -> std::same_as<int>;
-  { platform::remove_filter(poller, socket) } -> std::same_as<int>;
+  { platform::remove_filter(poller, socket, filter) } -> std::same_as<int>;
   { platform::wait_poller(poller, events, timeout) } -> std::same_as<int>;
   { platform::get_event_filter(event) } -> std::same_as<event_filter_type>;
   { platform::get_event_data(event) } -> std::same_as<void *>;
@@ -83,7 +83,7 @@ concept is_valid_platform_implementaiton = requires(
   requires noexcept(platform::errno_strerror());
   requires noexcept(platform::create_poller());
   requires noexcept(platform::set_filter(poller, socket, filter, data));
-  requires noexcept(platform::remove_filter(poller, socket));
+  requires noexcept(platform::remove_filter(poller, socket, filter));
   requires noexcept(platform::wait_poller(poller, events, timeout));
   requires noexcept(platform::get_event_filter(event));
   requires noexcept(platform::get_event_data(event));
