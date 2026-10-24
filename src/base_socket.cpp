@@ -46,10 +46,9 @@ base_socket::base_socket(uninitialized_t) noexcept
 base_socket::base_socket(enum family family, enum socktype socktype,
                          enum protocol protocol)
     : pimpl_([family, socktype, protocol] -> impl {
-        platform::native_handle_type const handle =
-            platform::create_native_handle(to_native_family(family),
-                                           to_native_socktype(socktype),
-                                           to_native_protocol(protocol));
+        platform::native_handle_type const handle = platform::create_socket(
+            to_native_family(family), to_native_socktype(socktype),
+            to_native_protocol(protocol));
 
         if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
           throw std::runtime_error(
@@ -68,7 +67,7 @@ base_socket::base_socket(base_socket const & that)
   }
 
   platform::native_handle_type const handle =
-      platform::copy_native_handle(*that.native_handle());
+      platform::copy_handle(*that.native_handle());
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
     throw std::runtime_error(
         std::format("base_socket::base_socket(): clone error {}",
@@ -84,7 +83,7 @@ auto base_socket::operator=(base_socket const & that) -> base_socket & {
   }
 
   platform::native_handle_type const handle =
-      platform::copy_native_handle(*that.native_handle());
+      platform::copy_handle(*that.native_handle());
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
     throw std::runtime_error(
         std::format("base_socket::operator==(): clone error {}",
@@ -92,7 +91,7 @@ auto base_socket::operator=(base_socket const & that) -> base_socket & {
   }
 
   if (*native_handle() != platform::kInvalidNativeHandle) {
-    std::ignore = platform::close_native_handle(*native_handle());
+    std::ignore = platform::close_handle(*native_handle());
   }
 
   *pimpl_ = impl(handle);
@@ -109,7 +108,7 @@ auto base_socket::operator=(base_socket && that) noexcept -> base_socket & {
   }
 
   if (*native_handle() != platform::kInvalidNativeHandle) {
-    std::ignore = platform::close_native_handle(*native_handle());
+    std::ignore = platform::close_handle(*native_handle());
   }
 
   pimpl_ = std::exchange(that.pimpl_, impl(platform::kInvalidNativeHandle));
@@ -121,7 +120,7 @@ base_socket::~base_socket() noexcept {
     return;
   }
 
-  std::ignore = platform::close_native_handle(*native_handle());
+  std::ignore = platform::close_handle(*native_handle());
 }
 
 void base_socket::close() {
@@ -129,7 +128,7 @@ void base_socket::close() {
     throw std::runtime_error("base_socket::close(): double close");
   }
 
-  auto const retval = platform::close_native_handle(
+  auto const retval = platform::close_handle(
       std::exchange(*native_handle(), platform::kInvalidNativeHandle));
   if (retval == platform::kErrorRetval) [[unlikely]] {
     throw std::runtime_error(std::format("base_socket::close(): close error {}",

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <chrono>
 #include <filesystem>
+#include <optional>
+#include <span>
 
 #include <swiss/concepts.hpp>
 #include <swiss/os_kind.hpp>
@@ -19,54 +22,71 @@ namespace skynet::platform::concepts {
 
 template <typename Platform = void>
 concept is_valid_platform_implementaiton = requires(
-    platform::native_handle_type handle, platform::socklen_t socklen,
-    platform::pollfd pollfd, platform::nfds_t nfds, int family, int type,
-    int protocol, int optval, int timeout, std::filesystem::path path) {
+    platform::native_handle_type socket, platform::socklen_t socklen,
+    int family, int type, int protocol, int optval, std::filesystem::path path,
+    platform::native_handle_type poller, platform::event_filter_type filter,
+    platform::event_type event, std::span<platform::event_type> events,
+    void * data, std::optional<std::chrono::milliseconds> timeout) {
   /**
    * @section Types
    */
-  { handle } -> swiss::not_same_as<void>;
+  { socket } -> swiss::not_same_as<void>;
   { socklen } -> swiss::not_same_as<void>;
-  { pollfd } -> swiss::not_same_as<void>;
-  { nfds } -> swiss::not_same_as<void>;
+  { poller } -> swiss::not_same_as<void>;
+  { filter } -> swiss::not_same_as<void>;
+  { event } -> swiss::not_same_as<void>;
 
   /**
    * @section Constants
    */
   {
     platform::kInvalidNativeHandle
-  } -> swiss::decay_same_as<native_handle_type>;
+  } -> swiss::decay_same_as<platform::native_handle_type>;
   { platform::kErrorRetval } -> swiss::decay_same_as<int>;
+  { platform::kPollin } -> swiss::decay_same_as<platform::event_filter_type>;
+  { platform::kPollout } -> swiss::decay_same_as<platform::event_filter_type>;
+  { platform::kPollerr } -> swiss::decay_same_as<platform::event_filter_type>;
+  { platform::kPollhup } -> swiss::decay_same_as<platform::event_filter_type>;
 
   /**
    * @section Functions
    */
   {
-    platform::create_native_handle(family, type, protocol)
-  } -> std::same_as<native_handle_type>;
-  { platform::copy_native_handle(handle) } -> std::same_as<int>;
-  { platform::close_native_handle(handle) } -> std::same_as<int>;
-  { platform::set_nonblock(handle, optval) } -> std::same_as<int>;
-  { platform::get_nonblock(handle) } -> std::same_as<int>;
-  { platform::accept(handle) } -> std::same_as<native_handle_type>;
-  { platform::poll(&pollfd, nfds, timeout) } -> std::same_as<int>;
+    platform::create_socket(family, type, protocol)
+  } -> std::same_as<platform::native_handle_type>;
+  { platform::copy_handle(socket) } -> std::same_as<int>;
+  { platform::close_handle(socket) } -> std::same_as<int>;
+  { platform::set_nonblock(socket, optval) } -> std::same_as<int>;
+  { platform::get_nonblock(socket) } -> std::same_as<int>;
+  { platform::accept(socket) } -> std::same_as<platform::native_handle_type>;
   { platform::unlink(path) } -> std::same_as<int>;
   { platform::get_last_error() } -> std::same_as<std::errc>;
   { platform::errno_strerror() } -> std::same_as<std::string>;
+  { platform::create_poller() } -> std::same_as<platform::native_handle_type>;
+  { platform::set_filter(poller, socket, filter, data) } -> std::same_as<int>;
+  { platform::remove_filter(poller, socket) } -> std::same_as<int>;
+  { platform::wait_poller(poller, events, timeout) } -> std::same_as<int>;
+  { platform::get_event_filter(event) } -> std::same_as<int>;
+  { platform::get_event_data(event) } -> std::same_as<void *>;
 
   /**
    * @section Exceptions
    */
-  requires noexcept(platform::create_native_handle(family, type, protocol));
-  requires noexcept(platform::close_native_handle(handle));
-  requires noexcept(platform::copy_native_handle(handle));
-  requires noexcept(platform::set_nonblock(handle, optval));
-  requires noexcept(platform::get_nonblock(handle));
-  requires noexcept(platform::accept(handle));
-  requires noexcept(platform::poll(&pollfd, nfds, timeout));
+  requires noexcept(platform::create_socket(family, type, protocol));
+  requires noexcept(platform::copy_handle(socket));
+  requires noexcept(platform::close_handle(socket));
+  requires noexcept(platform::set_nonblock(socket, optval));
+  requires noexcept(platform::get_nonblock(socket));
+  requires noexcept(platform::accept(socket));
   requires noexcept(platform::unlink(path));
   requires noexcept(platform::get_last_error());
   requires noexcept(platform::errno_strerror());
+  requires noexcept(platform::create_poller());
+  requires noexcept(platform::set_filter(poller, socket, filter, data));
+  requires noexcept(platform::remove_filter(poller, socket));
+  requires noexcept(platform::wait_poller(poller, events, timeout));
+  requires noexcept(platform::get_event_filter(event));
+  requires noexcept(platform::get_event_data(event));
 };
 static_assert(is_valid_platform_implementaiton<>,
               "invalid platform implementation");

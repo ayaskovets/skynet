@@ -10,123 +10,98 @@
 namespace skynet {
 
 namespace {
-// NOLINTBEGIN(hicpp-signed-bitwise)
 
-constexpr auto to_native_events(poller::events_type events) noexcept
-    -> std::int16_t {
-  std::int16_t native_events{};
-  native_events |= ((events & poller::event::kPollIn) != 0) ? POLLIN : 0;
-  native_events |= ((events & poller::event::kPollPri) != 0) ? POLLPRI : 0;
-  native_events |= ((events & poller::event::kPollOut) != 0) ? POLLOUT : 0;
-  native_events |= ((events & poller::event::kPollErr) != 0) ? POLLERR : 0;
-  native_events |= ((events & poller::event::kPollHup) != 0) ? POLLHUP : 0;
-  native_events |= ((events & poller::event::kPollNval) != 0) ? POLLNVAL : 0;
-  return native_events;
+constexpr auto to_native_events(poller::event_filter filter) noexcept
+    -> platform::event_filter_type {
+  switch (filter) {
+    case poller::kPollIn:
+      return platform::kPollin;
+    case poller::kPollOut:
+      return platform::kPollout;
+    case poller::kPollErr:
+      return platform::kPollerr;
+    case poller::kPollHup:
+      return platform::kPollhup;
+  }
+  std::unreachable();
 }
 
 [[maybe_unused]] constexpr auto from_native_events(
-    std::int16_t native_events) noexcept
-    -> poller::events_type {
-  poller::events_type events{};
-  events |= ((native_events & POLLIN) != 0) ? poller::event::kPollIn : 0;
-  events |= ((native_events & POLLPRI) != 0) ? poller::event::kPollPri : 0;
-  events |= ((native_events & POLLOUT) != 0) ? poller::event::kPollOut : 0;
-  events |= ((native_events & POLLERR) != 0) ? poller::event::kPollErr : 0;
-  events |= ((native_events & POLLHUP) != 0) ? poller::event::kPollHup : 0;
-  events |= ((native_events & POLLNVAL) != 0) ? poller::event::kPollNval : 0;
-  return events;
+    platform::event_filter_type filter) noexcept -> poller::event_filter {
+  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
+  switch (filter) {
+    case platform::kPollin:
+      return poller::kPollIn;
+    case platform::kPollout:
+      return poller::kPollOut;
+    case platform::kPollerr:
+      return poller::kPollErr;
+    case platform::kPollhup:
+      return poller::kPollHup;
+  }
+  std::unreachable();
 }
 
-// NOLINTEND(hicpp-signed-bitwise)
 }  // namespace
 
 struct poller::impl final {
-  std::vector<platform::pollfd> fds;
-  std::vector<std::size_t> softdel;
+  platform::native_handle_type queue = platform::kInvalidNativeHandle;
+  std::vector<platform::event_type> events;
 };
 
-poller::poller() noexcept = default;
+poller::poller(std::size_t capacity) {
+  auto & [queue, events] = *pimpl_;
 
-poller::poller(poller && that) noexcept = default;
+  queue = platform::create_poller();
+  if (queue == platform::kInvalidNativeHandle) [[unlikely]] {
+    throw std::runtime_error(
+        std::format("poller::poller(): {}", platform::errno_strerror()));
+  }
 
-auto poller::operator=(poller && that) noexcept -> poller & = default;
-
-poller::~poller() noexcept = default;
-
-auto poller::capacity() const noexcept -> std::size_t {
-  auto const & [polling, _] = *pimpl_;
-
-  return polling.capacity();
+  events.resize(capacity);
 }
 
-auto poller::size() const noexcept -> std::size_t {
-  auto const & [polling, softdel] = *pimpl_;
+poller::poller(poller && that) noexcept { std::swap(pimpl_, that.pimpl_); }
 
-  return polling.size() - softdel.size();
+auto poller::operator=(poller && that) noexcept -> poller & {
+  std::swap(pimpl_, that.pimpl_);
+  return *this;
 }
 
-void poller::shrink_to_fit() noexcept {
-  auto & [polling, softdel] = *pimpl_;
+poller::~poller() noexcept {
+  auto & [queue, _] = *pimpl_;
 
-  polling.shrink_to_fit();
-  softdel.shrink_to_fit();
+  if (queue != platform::kInvalidNativeHandle) {
+    std::ignore = platform::close_handle(queue);
+  }
 }
 
-auto poller::insert(base_socket const & sock, events_type events) -> ticket {
-  auto & [polling, softdel] = *pimpl_;
+void poller::insert_or_assign(base_socket const & socket, event_filter filter,
+                              void * data) {
+  auto & [queue, _] = *pimpl_;
 
-  for (auto const & pollfd : polling) {
-    if (pollfd.fd != platform::kInvalidNativeHandle &&
-        pollfd.fd == *sock.native_handle()) {
-      throw std::invalid_argument("poller::insert(): socket already inserted");
+  for (event_filter const event : {kPollIn, kPollOut}) {
+    if ((filter & event) == 0) {
+      continue;
+    }
+
+    if (platform::set_filter(queue, *socket.native_handle(),
+                             to_native_events(event),
+                             data) == platform::kErrorRetval) [[unlikely]] {
+      throw std::runtime_error(std::format("poller::insert_or_assign(): {}",
+                                           platform::errno_strerror()));
     }
   }
-
-  platform::pollfd const pollfd{
-      .fd      = *sock.native_handle(),
-      .events  = to_native_events(events),
-      .revents = {},
-  };
-
-  if (softdel.empty()) {
-    polling.push_back(pollfd);
-    return ticket(polling.size() - 1);
-  }
-
-  std::size_t const index = softdel.back();
-  softdel.pop_back();
-  polling[index] = pollfd;
-  return ticket(index);
 }
 
-void poller::update(ticket const & ticket, events_type events) {
-  if (ticket.is_moved_from()) {
-    throw std::invalid_argument("poller::erase(): reused ticket");
+void poller::erase(base_socket const & socket) {
+  auto & [queue, _] = *pimpl_;
+
+  if (platform::remove_filter(queue, *socket.native_handle()) ==
+      platform::kErrorRetval) [[unlikely]] {
+    throw std::runtime_error(
+        std::format("poller::erase(): {}", platform::errno_strerror()));
   }
-
-  auto & [polling, _] = *pimpl_;
-
-  polling[ticket.index_].events = to_native_events(events);
-}
-
-void poller::erase(ticket ticket) {
-  if (ticket.is_moved_from()) {
-    throw std::invalid_argument("poller::erase(): reused ticket");
-  }
-
-  auto & [polling, softdel] = *pimpl_;
-
-  if (ticket.index_ >= polling.size() ||
-      polling[ticket.index_].fd == platform::kInvalidNativeHandle) {
-    throw std::invalid_argument("poller::erase(): invalid ticket");
-  }
-
-  polling[ticket.index_] = platform::pollfd{
-      .fd      = platform::kInvalidNativeHandle,
-      .events  = {},
-      .revents = {},
-  };
-  softdel.push_back(ticket.index_);
 }
 
 void poller::try_poll() {
@@ -140,29 +115,18 @@ void poller::poll() {
 }
 
 void poller::poll_for(std::chrono::milliseconds milliseconds) {
-  auto & [polling, softdel] = *pimpl_;
+  auto & [queue, ready] = *pimpl_;
 
-  auto const retval = platform::poll(
-      polling.data(), static_cast<platform::nfds_t>(polling.size()),
-      swiss::bound<int>(milliseconds.count()));
+  auto const retval = platform::wait_poller(
+      queue, std::span<platform::event_type>(ready.data(), ready.size()),
+      milliseconds);
   if (retval == platform::kErrorRetval) [[unlikely]] {
     throw std::runtime_error(
         std::format("poller::poll_for(): {}", platform::errno_strerror()));
   }
 
   for (std::size_t i = 0; i < static_cast<std::size_t>(retval); ++i) {
-    if (polling[i].revents == to_native_events({})) {
-      continue;
-    }
-
-    /**
-     * @note Manually reset socket handle to pass a const reference to a socket
-     * object
-     */
-    base_socket socket(uninitialized);
-    *socket.native_handle() = polling[i].fd;
-
-    // TODO: handle socket
+    // TODO: handle socket, resize ready
   }
 }
 

@@ -6,62 +6,55 @@
 namespace tests::unit {
 
 TEST(multiplexing, size) {
-  static_assert(sizeof(skynet::poller) == 48);
+  static_assert(sizeof(skynet::poller) == 32);
   static_assert(alignof(skynet::poller) == 8);
 }
 
 TEST(multiplexing, move) {
-  skynet::poller moved_from;
+  skynet::poller moved_from(1);
   skynet::poller const moved_to(std::move(moved_from));
-
-  EXPECT_EQ(moved_from.size(), 0);
-  EXPECT_EQ(moved_to.size(), 0);
 }
 
 TEST(multiplexing, insert_erase) {
-  skynet::poller poller;
+  skynet::poller poller(1);
   skynet::inet::tcp::socket socket;
 
-  auto ticket = poller.insert(socket, skynet::poller::kPollIn);
-  EXPECT_EQ(poller.size(), 1);
+  poller.insert_or_assign(socket, skynet::poller::kPollIn, nullptr);
 
-  poller.erase(std::move(ticket));
+  poller.erase(socket);
 
-  EXPECT_EQ(poller.size(), 0);
   EXPECT_EQ(socket.family(), skynet::family::kInet);
   EXPECT_EQ(socket.socktype(), skynet::socktype::kStream);
 }
 
-TEST(multiplexing, duplicate_insert) {
-  skynet::poller poller;
+TEST(multiplexing, insert_or_assign) {
+  skynet::poller poller(1);
   skynet::inet::tcp::socket socket;
 
-  auto ticket = poller.insert(socket, skynet::poller::kPollIn);
+  poller.insert_or_assign(socket, skynet::poller::kPollIn, nullptr);
 
-  EXPECT_EQ(poller.size(), 1);
-  EXPECT_THROW(std::ignore = poller.insert(socket, skynet::poller::kPollOut),
-               std::invalid_argument);
+  EXPECT_NO_THROW(
+      poller.insert_or_assign(socket, skynet::poller::kPollOut, nullptr));
 
-  poller.erase(std::move(ticket));
+  poller.erase(socket);
 }
 
-TEST(multiplexing, ticket_reuse) {
-  skynet::poller poller;
+TEST(multiplexing, socket_reuse) {
+  skynet::poller poller(1);
   skynet::inet::tcp::socket first;
   skynet::inet::tcp::socket second;
 
-  auto first_ticket  = poller.insert(first, skynet::poller::kPollIn);
-  auto second_ticket = poller.insert(second, skynet::poller::kPollOut);
+  poller.insert_or_assign(first, skynet::poller::kPollIn, nullptr);
+  poller.insert_or_assign(second, skynet::poller::kPollOut, nullptr);
 
-  poller.erase(std::move(first_ticket));
-  EXPECT_EQ(poller.size(), 1);
-  EXPECT_NO_THROW(poller.update(second_ticket, skynet::poller::kPollIn));
+  poller.erase(first);
+  EXPECT_NO_THROW(
+      poller.insert_or_assign(second, skynet::poller::kPollIn, nullptr));
 
-  auto third_ticket = poller.insert(first, skynet::poller::kPollPri);
-  EXPECT_EQ(poller.size(), 2);
+  poller.insert_or_assign(first, skynet::poller::kPollIn, nullptr);
 
-  poller.erase(std::move(second_ticket));
-  poller.erase(std::move(third_ticket));
+  poller.erase(second);
+  poller.erase(first);
 }
 
 }  // namespace tests::unit
