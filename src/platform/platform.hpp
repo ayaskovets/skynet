@@ -66,7 +66,7 @@ concept is_valid_platform_implementaiton = requires(
   { platform::set_filter(poller, socket, filter, data) } -> std::same_as<int>;
   { platform::remove_filter(poller, socket) } -> std::same_as<int>;
   { platform::wait_poller(poller, events, timeout) } -> std::same_as<int>;
-  { platform::get_event_filter(event) } -> std::same_as<int>;
+  { platform::get_event_filter(event) } -> std::same_as<event_filter_type>;
   { platform::get_event_data(event) } -> std::same_as<void *>;
 
   /**

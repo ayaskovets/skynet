@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <iterator>
+#include <ranges>
 
 #include <swiss/functional.hpp>
 #include <swiss/mixins.hpp>
@@ -24,6 +26,43 @@ class poller final : public swiss::non_copyable {
     kPollErr = 1U << 3U,  ///< Error condition, used only in output
     kPollHup = 1U << 4U,  ///< Connection hang up, used only in output
   };
+
+  class event_iterator final {
+   public:
+    struct value_type final {
+      event_filter filter;
+      void * data;
+    };
+    using difference_type   = std::ptrdiff_t;
+    using iterator_category = std::input_iterator_tag;
+
+   public:
+    constexpr event_iterator() noexcept : poller_(nullptr), index_(0) {}
+    constexpr event_iterator(poller const * owner, std::size_t index) noexcept
+        : poller_(owner), index_(index) {}
+
+   public:
+    constexpr auto operator++() noexcept -> event_iterator & {
+      return ++index_, *this;
+    }
+
+    constexpr auto operator++(int) noexcept -> event_iterator {
+      return {poller_, index_++};
+    }
+
+   public:
+    [[nodiscard]] auto operator*() const noexcept -> value_type;
+
+    constexpr auto operator==(event_iterator const &) const noexcept
+        -> bool = default;
+
+   private:
+    poller const * poller_;
+    std::size_t index_;
+  };
+  using event_range_type =
+      std::ranges::subrange<event_iterator, event_iterator,
+                            std::ranges::subrange_kind::sized>;
 
  public:
   explicit poller(std::size_t capacity);
@@ -49,10 +88,10 @@ class poller final : public swiss::non_copyable {
  public:
   /**
    * @brief Synchronously poll for the events on tracked file descriptors
+   * @warning Returned iterators are valid until the next poll
    */
-  void poll_for(std::chrono::milliseconds milliseconds);
-  void try_poll();
-  void poll();
+  auto poll(std::optional<std::chrono::milliseconds> milliseconds)
+      -> event_range_type;
 
  private:
   struct impl;

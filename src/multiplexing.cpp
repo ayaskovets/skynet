@@ -1,5 +1,6 @@
 #include <skynet/multiplexing.hpp>
 
+#include <optional>
 #include <stdexcept>
 
 #include <swiss/math.hpp>
@@ -26,8 +27,8 @@ constexpr auto to_native_events(poller::event_filter filter) noexcept
   std::unreachable();
 }
 
-[[maybe_unused]] constexpr auto from_native_events(
-    platform::event_filter_type filter) noexcept -> poller::event_filter {
+constexpr auto from_native_events(platform::event_filter_type filter) noexcept
+    -> poller::event_filter {
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (filter) {
     case platform::kPollin:
@@ -48,6 +49,15 @@ struct poller::impl final {
   platform::native_handle_type queue = platform::kInvalidNativeHandle;
   std::vector<platform::event_type> events;
 };
+
+auto poller::event_iterator::operator*() const noexcept
+    -> poller::event_iterator::value_type {
+  auto const & native_event = poller_->pimpl_->events[index_];
+  return {
+      .filter = from_native_events(platform::get_event_filter(native_event)),
+      .data   = platform::get_event_data(native_event),
+  };
+}
 
 poller::poller(std::size_t capacity) {
   auto & [queue, events] = *pimpl_;
@@ -104,17 +114,8 @@ void poller::erase(base_socket const & socket) {
   }
 }
 
-void poller::try_poll() {
-  constexpr std::chrono::milliseconds kNonBlockingPollTimeout(0);
-  poll_for(kNonBlockingPollTimeout);
-}
-
-void poller::poll() {
-  constexpr std::chrono::milliseconds kBlockingTimeout(-1);
-  poll_for(kBlockingTimeout);
-}
-
-void poller::poll_for(std::chrono::milliseconds milliseconds) {
+auto poller::poll(std::optional<std::chrono::milliseconds> milliseconds)
+    -> event_range_type {
   auto & [queue, ready] = *pimpl_;
 
   auto const retval = platform::wait_poller(
@@ -125,9 +126,8 @@ void poller::poll_for(std::chrono::milliseconds milliseconds) {
         std::format("poller::poll_for(): {}", platform::errno_strerror()));
   }
 
-  for (std::size_t i = 0; i < static_cast<std::size_t>(retval); ++i) {
-    // TODO: handle socket, resize ready
-  }
+  auto const size = static_cast<std::size_t>(retval);
+  return {event_iterator(this, 0), event_iterator(this, size), size};
 }
 
 }  // namespace skynet

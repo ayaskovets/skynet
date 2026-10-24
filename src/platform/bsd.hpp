@@ -184,7 +184,8 @@ constexpr auto wait_poller(
                   static_cast<int>(events.size()), nullptr);
 }
 
-constexpr auto get_event_filter(event_type event) noexcept -> int {
+constexpr auto get_event_filter(event_type event) noexcept
+    -> event_filter_type {
   return event.filter;
 }
 
