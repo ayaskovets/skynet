@@ -37,7 +37,7 @@ constexpr void unconnected_send_receive(Sockaddr const & sockaddr) noexcept
 
   EXPECT_EQ(socket.sendto(data, sockaddr), data.size());
   std::vector<std::byte> buffer(data.size());
-  EXPECT_EQ(socket.recv(buffer), 0);
+  EXPECT_EQ(socket.recv(buffer), Socket::kWouldBlock);
 }
 
 template <typename Socket, skynet::concepts::sockaddr Sockaddr>

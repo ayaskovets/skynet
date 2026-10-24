@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <span>
 
 #include <swiss/static_pimpl.hpp>
@@ -19,6 +20,14 @@ namespace skynet {
  * @brief Socket base class. Constructible only by derived types
  */
 class base_socket {
+ public:
+  /**
+   * @brief Returned by send(), recv(), sendto() and recvfrom() when a
+   * nonblocking operation would block
+   */
+  static constexpr std::size_t kWouldBlock =
+      std::numeric_limits<std::size_t>::max();
+
  protected:
   /**
    * @brief Create an unitialized handle without any system calls

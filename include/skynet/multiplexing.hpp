@@ -81,9 +81,9 @@ class poller final : public swiss::non_copyable {
                         void * data);
 
   /**
-   * @brief Remove socket from polling list
+   * @brief Remove the filter from polling for the socket
    */
-  void erase(base_socket const & sock);
+  void erase(base_socket const & sock, event_filter filter);
 
  public:
   /**

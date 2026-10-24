@@ -435,9 +435,8 @@ auto base_socket::send(std::span<std::byte const> bytes) -> std::size_t {
   if (retval == platform::kErrorRetval) [[unlikely]] {
     std::errc const error = platform::get_last_error();
     if (error == std::errc::resource_unavailable_try_again ||
-        error == std::errc::operation_would_block ||
-        error == std::errc::no_buffer_space) {
-      return 0;
+        error == std::errc::operation_would_block) {
+      return kWouldBlock;
     }
 
     throw std::runtime_error(
@@ -457,9 +456,8 @@ auto base_socket::sendto(std::span<std::byte const> bytes,
   if (retval == platform::kErrorRetval) [[unlikely]] {
     std::errc const error = platform::get_last_error();
     if (error == std::errc::resource_unavailable_try_again ||
-        error == std::errc::operation_would_block ||
-        error == std::errc::no_buffer_space) {
-      return 0;
+        error == std::errc::operation_would_block) {
+      return kWouldBlock;
     }
 
     throw std::runtime_error(
@@ -476,7 +474,7 @@ auto base_socket::recv(std::span<std::byte> bytes) -> std::size_t {
     std::errc const error = platform::get_last_error();
     if (error == std::errc::resource_unavailable_try_again ||
         error == std::errc::operation_would_block) {
-      return 0;
+      return kWouldBlock;
     }
 
     throw std::runtime_error(
@@ -497,7 +495,7 @@ auto base_socket::recvfrom(std::span<std::byte> bytes, base_sockaddr & sockaddr)
     std::errc const error = platform::get_last_error();
     if (error == std::errc::resource_unavailable_try_again ||
         error == std::errc::operation_would_block) {
-      return 0;
+      return kWouldBlock;
     }
 
     throw std::runtime_error(

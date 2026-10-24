@@ -63,7 +63,10 @@ constexpr void throughput(benchmark::State & state,
     for (auto const _ : state) {
       std::size_t received = 0;
       while (received < data_size) {
-        received += peer.recv(buffer);
+        auto const count = peer.recv(buffer);
+        if (count != Socket::kWouldBlock) {
+          received += count;
+        }
       }
     }
   } else {
@@ -74,7 +77,10 @@ constexpr void throughput(benchmark::State & state,
     for (auto const _ : state) {
       std::size_t sent = 0;
       while (sent < data_size) {
-        sent += socket.send(buffer);
+        auto const count = socket.send(buffer);
+        if (count != Socket::kWouldBlock) {
+          sent += count;
+        }
       }
     }
   }
@@ -105,8 +111,11 @@ constexpr void throughput(benchmark::State & state,
       std::size_t received = 0;
       while (received < data_size) {
         std::size_t const _received = socket.recv(buffer);
-        if (_received == 0 && sender_done.load(std::memory_order::acquire)) {
-          break;
+        if (_received == Socket::kWouldBlock) {
+          if (sender_done.load(std::memory_order::acquire)) {
+            break;
+          }
+          continue;
         }
         received += _received;
       }
@@ -124,7 +133,10 @@ constexpr void throughput(benchmark::State & state,
       sender_done.store(false, std::memory_order::release);
       std::size_t sent = 0;
       while (sent < data_size) {
-        sent += socket.send(buffer);
+        auto const count = socket.send(buffer);
+        if (count != Socket::kWouldBlock) {
+          sent += count;
+        }
       }
       sender_done.store(true, std::memory_order::release);
     }

@@ -21,7 +21,7 @@ TEST(unix_dgram_socket, dgram_unconnected_send_receive) {
 
   EXPECT_ANY_THROW(socket.send(data));
   std::vector<std::byte> buffer(data.size());
-  EXPECT_EQ(socket.recv(buffer), 0);
+  EXPECT_EQ(socket.recv(buffer), skynet::base_socket::kWouldBlock);
 }
 
 TEST_T(unix_dgram_socket, bind, skynet::unix::dgram::socket,
