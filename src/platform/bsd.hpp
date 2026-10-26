@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cerrno>
 #include <filesystem>
 #include <optional>
@@ -44,10 +45,10 @@ namespace skynet::platform {
 
 constexpr native_handle_type kInvalidNativeHandle = -1;
 constexpr int kErrorRetval                        = -1;
-constexpr event_filter_type kPollin               = 1U << 0U;
-constexpr event_filter_type kPollout              = 1U << 1U;
-constexpr event_filter_type kPollerr              = 1U << 2U;
-constexpr event_filter_type kPollhup              = 1U << 3U;
+constexpr event_filter_type kPollIn               = 1U << 0U;
+constexpr event_filter_type kPollOut              = 1U << 1U;
+constexpr event_filter_type kPollErr              = 1U << 2U;
+constexpr event_filter_type kPollHup              = 1U << 3U;
 
 }  // namespace skynet::platform
 
@@ -124,65 +125,69 @@ constexpr auto errno_strerror() noexcept -> std::string {
       .message();
 }
 
-constexpr auto create_poller() noexcept -> native_handle_type {
-  native_handle_type const poller = ::kqueue();
-  if (poller != kInvalidNativeHandle) {
+constexpr auto create_reactor() noexcept -> native_handle_type {
+  native_handle_type const reactor = ::kqueue();
+  if (reactor != kInvalidNativeHandle) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
-    std::ignore = ::fcntl(poller, F_SETFD, FD_CLOEXEC);
+    std::ignore = ::fcntl(reactor, F_SETFD, FD_CLOEXEC);
   }
-  return poller;
+  return reactor;
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-constexpr auto set_filter(native_handle_type poller, native_handle_type socket,
+constexpr auto set_filter(native_handle_type reactor, native_handle_type socket,
                           event_filter_type filter, void * data) noexcept
     -> int {
-  struct ::kevent event{};
-  switch (filter) {
-    case kPollin:
-      EV_SET(&event, socket, EVFILT_READ, EV_ADD, 0, 0, data);
-      break;
-    case kPollout:
-      EV_SET(&event, socket, EVFILT_WRITE, EV_ADD, 0, 0, data);
-      break;
-    default:
-      errno = EINVAL;
-      return kErrorRetval;
+  /**
+   * @brief List of all input events
+   */
+  constexpr std::array kInputEvents{kPollIn, kPollOut};
+  std::array<event_type, kInputEvents.size()> changes{};
+  std::array<event_type, kInputEvents.size()> receipts{};
+
+  for (std::size_t i = 0; i < kInputEvents.size(); ++i) {
+    auto const event = kInputEvents.at(i);
+    auto const flags = static_cast<std::uint16_t>(
+        EV_RECEIPT | ((filter & event) != 0 ? EV_ADD | EV_CLEAR : EV_DELETE));
+    switch (event) {
+      case kPollIn:
+        EV_SET(&changes.at(i), socket, EVFILT_READ, flags, 0, 0, data);
+        break;
+      case kPollOut:
+        EV_SET(&changes.at(i), socket, EVFILT_WRITE, flags, 0, 0, data);
+        break;
+      default:
+        errno = EINVAL;
+        return kErrorRetval;
+    }
   }
-  return ::kevent(poller, &event, 1, nullptr, 0, nullptr);
+
+  auto const retval =
+      ::kevent(reactor, changes.data(), static_cast<int>(changes.size()),
+               receipts.data(), static_cast<int>(receipts.size()), nullptr);
+  if (retval == kErrorRetval) {
+    return kErrorRetval;
+  }
+
+  for (std::size_t i = 0; i < static_cast<std::size_t>(retval); ++i) {
+    auto const error = static_cast<int>(receipts.at(i).data);
+    if (error != 0 &&
+        ((changes.at(i).flags & EV_DELETE) == 0 || error != ENOENT)) {
+      errno = error;
+      return kErrorRetval;
+    }
+  }
+  return 0;
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-constexpr auto remove_filter(native_handle_type poller,
-                             native_handle_type socket,
-                             event_filter_type filter) noexcept -> int {
-  struct ::kevent event{};
-  switch (filter) {
-    case kPollin:
-      EV_SET(&event, socket, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
-      break;
-    case kPollout:
-      EV_SET(&event, socket, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
-      break;
-    default:
-      errno = EINVAL;
-      return kErrorRetval;
-  }
-
-  auto const retval = ::kevent(poller, &event, 1, nullptr, 0, nullptr);
-  if (retval == kErrorRetval && errno == ENOENT) {
-    /**
-     * @note Ignore ENOENT to allow silently dropping errors due to removing
-     * non-registered filters
-     */
-    return 0;
-  }
-
-  return retval;
+constexpr auto remove_filter(native_handle_type reactor,
+                             native_handle_type socket) noexcept -> int {
+  return set_filter(reactor, socket, {}, nullptr);
 }
 
-constexpr auto wait_poller(
-    native_handle_type poller, std::span<event_type> events,
+constexpr auto poll_reactor(
+    native_handle_type reactor, std::span<event_type> events,
     std::optional<std::chrono::milliseconds> timeout) noexcept -> int {
   if (timeout.has_value()) {
     auto const seconds =
@@ -193,24 +198,24 @@ constexpr auto wait_poller(
         .tv_nsec = std::chrono::nanoseconds(*timeout - seconds).count(),
     };
 
-    return ::kevent(poller, nullptr, 0, events.data(),
+    return ::kevent(reactor, nullptr, 0, events.data(),
                     static_cast<int>(events.size()), &timespec);
   }
 
-  return ::kevent(poller, nullptr, 0, events.data(),
+  return ::kevent(reactor, nullptr, 0, events.data(),
                   static_cast<int>(events.size()), nullptr);
 }
 
 constexpr auto get_event_filter(event_type event) noexcept
     -> event_filter_type {
   event_filter_type filter{};
-  filter |= event.filter == EVFILT_READ ? kPollin : 0;
-  filter |= event.filter == EVFILT_WRITE ? kPollout : 0;
+  filter |= event.filter == EVFILT_READ ? kPollIn : 0;
+  filter |= event.filter == EVFILT_WRITE ? kPollOut : 0;
   filter |= ((event.flags & EV_ERROR) != 0 ||
              ((event.flags & EV_EOF) != 0 && event.fflags != 0))
-                ? kPollerr
+                ? kPollErr
                 : 0;
-  filter |= (event.flags & EV_EOF) != 0 ? kPollhup : 0;
+  filter |= (event.flags & EV_EOF) != 0 ? kPollHup : 0;
   return filter;
 }
 

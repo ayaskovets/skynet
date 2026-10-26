@@ -102,9 +102,9 @@ class base_socket {
 
  private:
   /**
-   * @note Required for poller to access native_handle()
+   * @note Required for reactor to access native_handle()
    */
-  friend class poller;
+  friend class reactor;
 };
 
 }  // namespace skynet

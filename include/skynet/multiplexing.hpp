@@ -13,12 +13,12 @@
 namespace skynet {
 
 /**
- * @brief IO multiplexing class
+ * @brief Edge-triggered IO reactor
  * @warning Does not own sockets being polled for IO events. Each socket added
  * for polling must be erased before it gets closed to prevent UB
  */
 // NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
-class poller final : public swiss::non_copyable {
+class reactor final : public swiss::non_copyable {
  public:
   enum event_filter : std::uint8_t {
     kPollIn  = 1U << 0U,  ///< There is data to read
@@ -37,9 +37,9 @@ class poller final : public swiss::non_copyable {
     using iterator_category = std::input_iterator_tag;
 
    public:
-    constexpr event_iterator() noexcept : poller_(nullptr), index_(0) {}
-    constexpr event_iterator(poller const * owner, std::size_t index) noexcept
-        : poller_(owner), index_(index) {}
+    constexpr event_iterator() noexcept : reactor_(nullptr), index_(0) {}
+    constexpr event_iterator(reactor const * owner, std::size_t index) noexcept
+        : reactor_(owner), index_(index) {}
 
    public:
     constexpr auto operator++() noexcept -> event_iterator & {
@@ -47,7 +47,7 @@ class poller final : public swiss::non_copyable {
     }
 
     constexpr auto operator++(int) noexcept -> event_iterator {
-      return {poller_, index_++};
+      return {reactor_, index_++};
     }
 
    public:
@@ -57,7 +57,7 @@ class poller final : public swiss::non_copyable {
         -> bool = default;
 
    private:
-    poller const * poller_;
+    reactor const * reactor_;
     std::size_t index_;
   };
   using event_range_type =
@@ -65,29 +65,29 @@ class poller final : public swiss::non_copyable {
                             std::ranges::subrange_kind::sized>;
 
  public:
-  explicit poller(std::size_t capacity);
-  poller(poller &&) noexcept;
-  auto operator=(poller &&) noexcept -> poller &;
-  ~poller() noexcept;
+  explicit reactor(std::size_t capacity);
+  reactor(reactor &&) noexcept;
+  auto operator=(reactor &&) noexcept -> reactor &;
+  ~reactor() noexcept;
 
  public:
   /**
-   * @brief Track or update the selected events for the socket for future
-   * polling
-   * @warning Not safe to call from the callback
-   * @warning Not thread-safe
+   * @brief Replace the complete interest mask and shared data for the socket
+   * @note Unselected directions are removed; an empty mask removes the socket
+   * @note Notifications are edge-triggered and registrations are persistent
    */
   void insert_or_assign(base_socket const & sock, event_filter filter,
                         void * data);
 
   /**
-   * @brief Remove the filter from polling for the socket
+   * @brief Remove the socket from polling
    */
-  void erase(base_socket const & sock, event_filter filter);
+  void erase(base_socket const & sock);
 
  public:
   /**
    * @brief Synchronously poll for the events on tracked file descriptors
+   * @note A socket may produce separate read and write events
    * @warning Returned iterators are valid until the next poll
    */
   auto poll(std::optional<std::chrono::milliseconds> milliseconds)
