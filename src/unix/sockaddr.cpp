@@ -20,7 +20,7 @@ sockaddr::sockaddr(std::filesystem::path const & path)
     : base_sockaddr(family::kUnix) {
   constexpr std::size_t kMaxPathSize = sizeof(::sockaddr_un{}.sun_path) - 1;
 
-  if (path.native().size() >= kMaxPathSize) [[unlikely]] {
+  if (path.native().size() > kMaxPathSize) [[unlikely]] {
     throw std::invalid_argument("sockaddr::sockaddr(): invalid path length");
   }
 

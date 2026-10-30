@@ -43,6 +43,12 @@ TEST_P(base_sockaddr, copy) {
   EXPECT_EQ(original.socklen(), copy.socklen());
   EXPECT_NE(original.native_sockaddr(), copy.native_sockaddr());
   EXPECT_EQ(original, copy);
+
+  sockaddr const other(family == skynet::family::kInet6
+                           ? skynet::family::kInet
+                           : skynet::family::kInet6);
+  EXPECT_NE(original, other);
+  EXPECT_NE(other, original);
 }
 
 TEST_P(base_sockaddr, move) {

@@ -12,23 +12,6 @@ base_socket::base_socket(skynet::socktype type)
     : skynet::base_socket(skynet::family::kUnix, type,
                           skynet::protocol::kDefault) {}
 
-base_socket::~base_socket() noexcept {
-  if (*native_handle() == platform::kInvalidNativeHandle) {
-    return;
-  }
-
-  skynet::unix::sockaddr sockaddr(skynet::unix::sockaddr::kEmpty());
-  try {
-    getsockname(sockaddr);
-  } catch (...) {
-    return;
-  }
-
-  if (!sockaddr.get_path().empty()) {
-    std::ignore = platform::unlink(sockaddr.get_path());
-  }
-}
-
 auto base_socket::bind(skynet::unix::sockaddr const & sockaddr)
     -> skynet::bind_status {
   switch (skynet::base_socket::bind(sockaddr)) {
@@ -71,7 +54,7 @@ void base_socket::unlink_close() {
     if (retval == platform::kErrorRetval) {
       if (platform::get_last_error() != std::errc::no_such_file_or_directory) {
         throw std::runtime_error(
-            std::format("base_socket::unlink_bind(): unlink error {}",
+            std::format("base_socket::unlink_close(): unlink error {}",
                         platform::errno_strerror()));
       }
     }

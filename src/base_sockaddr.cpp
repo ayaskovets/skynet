@@ -28,6 +28,10 @@ base_sockaddr::base_sockaddr(enum family family)
 
 auto base_sockaddr::operator==(base_sockaddr const & that) const noexcept
     -> bool {
+  if (family() != that.family()) {
+    return false;
+  }
+
   switch (impl_.get<::sockaddr>()->sa_family) {
     case AF_INET: {
       auto const * this_sockaddr = impl_.get<::sockaddr_in>();

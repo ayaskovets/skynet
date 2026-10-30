@@ -97,7 +97,11 @@ constexpr auto set_nonblock(native_handle_type socket, int optval) noexcept
 
 constexpr auto get_nonblock(native_handle_type socket) noexcept -> int {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
-  return ((::fcntl(socket, F_GETFL) & O_NONBLOCK) != 0) ? 1 : 0;
+  int const flags = ::fcntl(socket, F_GETFL);
+  if (flags == kErrorRetval) {
+    return kErrorRetval;
+  }
+  return ((flags & O_NONBLOCK) != 0) ? 1 : 0;
 }
 
 constexpr auto accept(native_handle_type socket) noexcept

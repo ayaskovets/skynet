@@ -7,13 +7,12 @@ namespace skynet::unix {
 
 /**
  * @brief UNIX socket base class
+ * @note Destruction does not unlink()
  */
-// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 class base_socket : public skynet::base_socket {
  public:
   explicit base_socket(uninitialized_t) noexcept;
   explicit base_socket(skynet::socktype type);
-  ~base_socket() noexcept;
 
  public:
   /**

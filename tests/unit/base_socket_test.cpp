@@ -33,6 +33,8 @@ TEST(base_socket, manual_close) {
   EXPECT_NO_THROW(sock.close());
   EXPECT_ANY_THROW(sock.close());
   EXPECT_ANY_THROW(sock.close());
+  skynet::options::nonblock option{};
+  EXPECT_ANY_THROW(sock.get_option(option));
 }
 
 TEST(base_socket, self_copy_assignment) {
@@ -78,7 +80,9 @@ TEST(base_socket, duplicate) {
 
   copy = socket(skynet::family::kInet, skynet::socktype::kStream,
                 skynet::protocol::kTcp);
-  EXPECT_NO_THROW(copy.close());
+  EXPECT_NO_THROW(copy = original);
+  EXPECT_EQ(copy, original);
+  EXPECT_ANY_THROW(copy.close());
 }
 
 TEST(base_socket, equality) {

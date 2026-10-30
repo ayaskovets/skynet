@@ -82,6 +82,10 @@ auto base_socket::operator=(base_socket const & that) -> base_socket & {
     return *this;
   }
 
+  if (*that.native_handle() == platform::kInvalidNativeHandle) {
+    return *this = base_socket(uninitialized);
+  }
+
   platform::native_handle_type const handle =
       platform::copy_handle(*that.native_handle());
   if (handle == platform::kInvalidNativeHandle) [[unlikely]] {
@@ -424,13 +428,17 @@ auto base_socket::accept(base_socket & socket) const -> accept_status {
         std::format("base_socket::accept(): {}", platform::errno_strerror()));
   }
 
+  if (*socket.native_handle() != platform::kInvalidNativeHandle) {
+    std::ignore = platform::close_handle(*socket.native_handle());
+  }
   *socket.native_handle() = handle;
 
   return accept_status::kSuccess;
 }
 
 auto base_socket::send(std::span<std::byte const> bytes) -> std::size_t {
-  auto const retval = ::send(*native_handle(), bytes.data(), bytes.size(), 0);
+  auto const retval =
+      ::send(*native_handle(), bytes.data(), bytes.size(), MSG_NOSIGNAL);
 
   if (retval == platform::kErrorRetval) [[unlikely]] {
     std::errc const error = platform::get_last_error();
@@ -449,7 +457,7 @@ auto base_socket::send(std::span<std::byte const> bytes) -> std::size_t {
 auto base_socket::sendto(std::span<std::byte const> bytes,
                          base_sockaddr const & sockaddr) -> std::size_t {
   auto const retval =
-      ::sendto(*native_handle(), bytes.data(), bytes.size(), 0,
+      ::sendto(*native_handle(), bytes.data(), bytes.size(), MSG_NOSIGNAL,
                static_cast<::sockaddr const *>(sockaddr.native_sockaddr()),
                static_cast<platform::socklen_t>(sockaddr.socklen()));
 
